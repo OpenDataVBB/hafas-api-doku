@@ -2,7 +2,7 @@
 
 Entwicklerdokumentation der VBB Fahrinfo-API (HAFAS ReST 2.52) für Fahrplanauskunft, Abfahrts- und Ankunftstafeln, Fahrzeugpositionen und Störungsmeldungen in Berlin und Brandenburg.
 
-**Zur Dokumentation:** <https://opendatavbb.github.io/hafas-api-doku/> <!-- nach dem Einrichten von GitHub Pages anpassen -->
+**Zur Dokumentation:** <https://opendatavbb.github.io/hafas-api-doku/>
 
 ## Auf einen Blick
 
