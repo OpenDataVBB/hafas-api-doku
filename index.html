@@ -741,7 +741,8 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td><code>lines</code>, <code>lineids</code>, <code>globallineids</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Linienfilter (Name / lineId / GlobalId mit Präfix), Negation mit <code>!</code>.</td></tr>
 <tr><td><code>operators</code>, <code>categories</code>, <code>categoryFlags</code></td><td>string</td><td>–</td><td>Unternehmen, Kategorien, Kategorie-Flags.</td></tr>
 <tr><td><code>attributes</code>, <code>sattributes</code>, <code>fattributes</code></td><td>string</td><td>–</td><td>Fahrt-, Haltestellen- und Fußweg-Attribute.</td></tr>
-<tr><td><code>groupFilter</code>, <code>mobilityProfile</code></td><td>string</td><td>–</td><td>Vordefinierte Filter bzw. Mobilitätsprofile der Installation.</td></tr>
+<tr><td><code>mobilityProfile</code></td><td>string</td><td>–</td><td>Mobilitätsprofil für die <a href="#trip-barrierefrei">barrierefreie Suche</a>: <code>limitedBarrierfree</code> (bedingt barrierefrei) oder <code>completeBarrierfree</code> (voll barrierefrei).</td></tr>
+<tr><td><code>groupFilter</code></td><td>string</td><td>–</td><td>Vordefinierte Filter der Installation.</td></tr>
 <tr><td><code>trainFilter</code></td><td>string</td><td>–</td><td>Suche auf einen bestimmten Zug einschränken.</td></tr>
 <tr><td><code>bikeCarriage</code></td><td>bool</td><td>false</td><td>Nur Verbindungen mit Fahrradmitnahme.</td></tr>
 <tr><td><code>bikeCarriageType</code></td><td>enum</td><td>–</td><td><code>SINGLEBIKES</code>, <code>SMALLGROUPS</code>, <code>LARGEGROUPS</code></td></tr>
@@ -774,7 +775,7 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td><code>withFreq</code></td><td>bool</td><td>true</td><td>Taktinformationen (<code>Freq</code>).</td></tr>
 <tr><td><code>withJourneyBoundaryPoints</code></td><td>bool</td><td>false</td><td>Start- und Endhalt der gesamten Fahrt je Abschnitt.</td></tr>
 <tr><td><code>trainComposition</code></td><td>bool</td><td>false</td><td>Zugbildung, soweit vorhanden.</td></tr>
-<tr><td><code>baim</code></td><td>bool</td><td>false</td><td>Barrierefreiheitsinformationen.</td></tr>
+<tr><td><code>baim</code></td><td>bool</td><td>false</td><td>Barrierefreiheitsinformationen; zusammen mit <code>mobilityProfile</code> für die <a href="#trip-barrierefrei">barrierefreie Suche</a>.</td></tr>
 <tr><td><code>rtMode</code></td><td>enum</td><td>–</td><td><code>FULL</code>, <code>INFOS</code>, <code>OFF</code>, <code>REALTIME</code>, <code>SERVER_DEFAULT</code></td></tr>
 <tr class="grp"><td colspan="4">Sonstiges</td></tr>
 <tr><td><code>economic</code>, <code>unsharp</code></td><td>bool</td><td>false</td><td>Sparsamer bzw. unscharfer Suchmodus.</td></tr>
@@ -843,6 +844,47 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
 </ul>
 <h4>Polylinien</h4>
 <p>Mit <code>poly=1</code> enthält jeder Fahrtabschnitt <code>PolylineGroup.polylineDesc[].crd</code>, Fußwege <code>GisRoute.polylineGroup</code>. <code>crd</code> ist eine flache Liste <code>[lon, lat, lon, lat, …]</code>. Mit <code>polyEnc=GPA</code> erhalten Sie stattdessen eine Google-Encoded-Polyline (<code>crdEncS</code>), was die Antwort deutlich verkleinert.</p>
+
+<h3 id="trip-barrierefrei">Barrierefreie Verbindungssuche</h3>
+<p>Für mobilitätseingeschränkte Reisende sucht <code>trip</code> Verbindungen, die nur Wege nutzen, die für das gewählte Profil geeignet sind. Übergeben Sie dazu <code>baim=1</code> und ein Mobilitätsprofil in <code>mobilityProfile</code>. Die beiden Profile entsprechen den Auswahlmöglichkeiten der VBB-Fahrinfo:</p>
+</div>
+<div class="tbl"><table>
+<thead><tr><th><code>mobilityProfile</code></th><th>VBB-Fahrinfo</th><th>Wirkung</th></tr></thead>
+<tbody>
+<tr><td><code>limitedBarrierfree</code></td><td>bedingt barrierefrei</td><td>Wege ohne feste Treppen; Rolltreppen sind erlaubt.</td></tr>
+<tr><td><code>completeBarrierfree</code></td><td>voll barrierefrei</td><td>Wege ohne Treppen und Rolltreppen, zum Beispiel über Aufzüge.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage: voll barrierefrei<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/trip?accessId=$ACCESS_ID&amp;originId=900100003&amp;destId=900023201\
+&amp;baim=1&amp;mobilityProfile=completeBarrierfree&amp;numF=3&amp;format=json"</pre></div>
+<div class="prose">
+<p>Die Antwort hat denselben Aufbau wie eine normale Verbindungsauskunft. Zusätzlich beschreibt die Verbindung den Weg innerhalb der Bahnhöfe: Vor und nach der Fahrt stehen eigene <code>WALK</code>-Abschnitte vom Zugang zum Bahnsteig, deren <code>GisRoute.seg[]</code> Aufzüge oder Rolltreppen benennt. Dieselbe Fahrt von Alexanderplatz zum Zoologischen Garten am Vormittag:</p>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Suche</th><th>Erste Verbindung</th><th>Weg zum Bahnsteig am Alexanderplatz</th></tr></thead>
+<tbody>
+<tr><td>ohne Profil</td><td>S7, 13 Min.</td><td>nicht ausgewiesen</td></tr>
+<tr><td><code>limitedBarrierfree</code></td><td>Fußweg 1 Min. · S9 · Fußweg 2 Min., 16 Min.</td><td>„Bahnhofshalle Rolltreppe zum Bahnsteig Gleis 3+4“, „Rolltreppe aufwärts“</td></tr>
+<tr><td><code>completeBarrierfree</code></td><td>Fußweg 3 Min. · S3 · Fußweg 3 Min., 20 Min.</td><td>„Bahnhofshalle Aufzug zum Bahnsteig Gleis 3+4“, „Aufzug aufwärts“</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt, erster Abschnitt, <code>completeBarrierfree</code>)</div><pre>{
+  "type": "WALK", "name": "Fußweg", "duration": "PT3M", "dist": 89,
+  "Origin":      { "name": "S+U Alexanderplatz Bhf (Berlin)", "extId": "300003304", "time": "09:01:00" },
+  "Destination": { "name": "S+U Alexanderplatz Bhf (Berlin)", "extId": "300003234", "time": "09:04:00" },
+  "GisRoute": { "seg": [
+    { "man": "NO", "manTx": "Fußweg", "dist": 7 },
+    { "man": "NO", "manTx": "Bahnhofshalle Aufzug zum Bahnsteig Gleis 3+4" },
+    { "man": "NO", "manTx": "Aufzug aufwärts", "dist": 0 },
+    { "man": "NO", "manTx": "Bahnsteig Gleis 3+4 Aufzug zur Bahnhofshalle" },
+    { "man": "NO", "manTx": "Fußweg", "dist": 82 }
+  ] }
+}</pre></div>
+<div class="prose">
+<ul>
+  <li>Fahrtabschnitte tragen weiterhin den Hinweis <code>bf</code> („barrierefrei“) bzw. „nicht barrierefrei“, siehe <a href="#hinweise">Hinweise</a>.</li>
+  <li>Barrierefreie Verbindungen sind oft etwas länger, weil Aufzüge oder andere Zugänge Umwege bedeuten.</li>
+  <li>Für langsameres Gehen lassen sich die Umstiegszeiten zusätzlich mit <code>changeTimePercent</code> verlängern.</li>
+</ul>
+<div class="note warn"><p><strong>Profilnamen exakt schreiben.</strong> Ein unbekannter Wert in <code>mobilityProfile</code> wird ohne Fehlermeldung ignoriert; die Antwort ist dann eine normale, nicht barrierefreie Verbindungssuche. Auch <code>baim=1</code> allein ändert die Suche nicht. Entscheidend ist das Profil.</p></div>
 </div>
 
 <!-- ============================ journeyDetail ============================ -->
