@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VBB Fahrinfo-API 2.52</title>
+<meta name="description" content="Entwicklerdokumentation der VBB Fahrinfo-API (HAFAS ReST 2.52): Services, Parameter, Beispiele, Fehlerbehandlung und Changelog gegenüber 2.49.">
+<!-- Schriften lokal eingebunden (IBM Plex, SIL Open Font License 1.1, siehe fonts/OFL.txt) -->
+<style>
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans'; font-style: italic; font-weight: 400; font-display: swap; src: url('fonts/ibm-plex-sans-latin-400-italic.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/ibm-plex-sans-condensed-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/ibm-plex-sans-condensed-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/ibm-plex-sans-condensed-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2'); }
+</style>
+
+<style>
+/* Layout: Referenzdokument mit fester Navigationsspalte links, Lesespalte ~72ch, Codeblöcke dürfen breiter scrollen */
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --fg: #16202b;
+  --muted: #566372;
+  --line: #d9dfe6;
+  --accent: #0d5aa7;
+  --accent-soft: #e4eef9;
+  --code-bg: #f0f3f7;
+  --code-fg: #1b2733;
+  --new: #1d7a46;  --new-bg: #e2f3e9;
+  --chg: #9a5b00;  --chg-bg: #fbefd9;
+  --del: #b42318;  --del-bg: #fbe5e3;
+  --req: #b42318;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --step-0: 1rem; --step-1: 1.2rem; --step-2: 1.5rem; --step-3: 2.1rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #151d26; --fg: #e3e9ef; --muted: #9aa8b6; --line: #2a3643;
+    --accent: #6cb0f2; --accent-soft: #16304a; --code-bg: #1a242f; --code-fg: #dbe4ec;
+    --new: #6fd39b; --new-bg: #143423; --chg: #f0b45a; --chg-bg: #3a2a10; --del: #f28b82; --del-bg: #3d1b18; --req: #f28b82;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #151d26; --fg: #e3e9ef; --muted: #9aa8b6; --line: #2a3643;
+  --accent: #6cb0f2; --accent-soft: #16304a; --code-bg: #1a242f; --code-fg: #dbe4ec;
+  --new: #6fd39b; --new-bg: #143423; --chg: #f0b45a; --chg-bg: #3a2a10; --del: #f28b82; --del-bg: #3d1b18; --req: #f28b82;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 16px/1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code, pre, kbd { font-family: var(--font-mono); font-size: 0.875em; }
+:not(pre) > code { background: var(--code-bg); color: var(--code-fg); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+
+.shell { display: grid; grid-template-columns: 270px minmax(0, 1fr); min-height: 100vh; }
+nav.toc {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--line); background: var(--surface);
+  padding-block: 28px 40px; padding-inline: 22px;
+  font-size: 0.875rem;
+}
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; letter-spacing: 0.01em; line-height: 1.2; }
+.brand small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 0.75rem; color: var(--muted); margin-top: 4px; letter-spacing: 0; }
+nav.toc h4 { font-family: var(--font-display); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 22px 0 6px; font-weight: 600; }
+nav.toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+nav.toc a { display: block; padding: 3px 8px; margin-left: -8px; border-radius: 5px; color: var(--fg); text-decoration: none; }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc a code { background: none; padding: 0; font-size: 0.82rem; }
+
+main {
+  padding-block: 40px 96px;
+  padding-left: max(32px, env(safe-area-inset-left, 0px));
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+}
+.col { max-width: 980px; }
+.prose { max-width: 74ch; }
+
+header.hero { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.02em; }
+h1 { font-family: var(--font-display); font-size: var(--step-3); line-height: 1.1; margin: 8px 0 12px; font-weight: 700; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.2; margin: 64px 0 12px; padding-top: 12px; font-weight: 700; text-wrap: balance; scroll-margin-top: 16px; }
+h3 { font-family: var(--font-display); font-size: var(--step-1); margin: 36px 0 8px; font-weight: 600; scroll-margin-top: 16px; }
+h4 { font-size: 0.95rem; margin: 22px 0 6px; font-weight: 600; }
+p, ul, ol { margin: 0 0 14px; }
+li { margin-bottom: 4px; }
+.lead { font-size: 1.08rem; color: var(--muted); max-width: 70ch; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); margin-top: 22px; overflow: hidden; }
+.facts div { padding: 12px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 0; margin: 0 -1px -1px 0; }
+.facts dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-family: var(--font-display); font-weight: 600; }
+.facts dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
+
+/* Service-Kopf: Methode + Pfad wie eine Fahrplan-Zeile */
+.endpoint { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0 16px; font-family: var(--font-mono); font-size: 0.9rem; }
+.endpoint .m { font-weight: 500; background: var(--accent); color: var(--surface); padding: 1px 8px; border-radius: 4px; font-size: 0.78rem; letter-spacing: 0.04em; }
+.endpoint .p { overflow-wrap: anywhere; min-width: 0; }
+.endpoint .p b { font-weight: 500; color: var(--accent); }
+
+.badge { display: inline-block; font-family: var(--font-display); font-weight: 600; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; vertical-align: 2px; white-space: nowrap; }
+.b-new { color: var(--new); background: var(--new-bg); }
+.b-chg { color: var(--chg); background: var(--chg-bg); }
+.b-del { color: var(--del); background: var(--del-bg); }
+.b-req { color: var(--req); background: var(--del-bg); }
+.b-lim { color: var(--accent); background: var(--accent-soft); }
+
+.tbl { overflow-x: auto; margin: 10px 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-display); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); background: var(--bg); white-space: nowrap; }
+td:first-child { white-space: nowrap; }
+td code { white-space: nowrap; }
+td.wrap code { white-space: normal; }
+.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+tr.grp td { background: var(--bg); font-family: var(--font-display); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding-top: 10px; }
+
+.code { position: relative; margin: 10px 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+.code .lbl { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.code pre { margin: 0; padding: 12px 14px; overflow: auto; max-height: 460px; color: var(--code-fg); line-height: 1.5; tab-size: 2; }
+.copy { font: 500 0.72rem var(--font-body); letter-spacing: 0.02em; text-transform: none; color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 5px; padding: 2px 9px; cursor: pointer; }
+.copy:hover { background: var(--surface); }
+
+.note { border: 1px solid var(--line); border-left-width: 4px; border-radius: 6px; padding: 12px 16px; margin: 14px 0 18px; background: var(--surface); max-width: 80ch; }
+.note p:last-child, .note ul:last-child { margin-bottom: 0; }
+.note.info { border-left-color: var(--accent); }
+.note.warn { border-left-color: var(--chg); }
+.note.crit { border-left-color: var(--del); }
+.note strong:first-child { font-family: var(--font-display); letter-spacing: 0.01em; }
+
+.prod { display: inline-block; min-width: 2.6em; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 0.78rem; padding: 1px 6px; border-radius: 4px; color: #fff; }
+
+.steps { display: grid; gap: 14px; counter-reset: s; margin: 14px 0; }
+.steps > div { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 4px 12px; }
+.steps > div::before { counter-increment: s; content: counter(s); grid-row: span 3; font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.steps h4 { margin: 4px 0 2px; }
+
+.svc-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--muted); margin: -4px 0 10px; }
+hr.sep { border: 0; border-top: 1px solid var(--line); margin: 56px 0 0; }
+
+.cl-ver { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-top: 8px; }
+.cl-ver .v { font-family: var(--font-mono); font-size: 1rem; font-weight: 500; }
+ul.cl { list-style: none; padding: 0; display: grid; gap: 8px; max-width: 86ch; }
+ul.cl li { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: 10px; align-items: baseline; margin: 0; }
+ul.cl li > .badge { justify-self: start; }
+
+footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; max-width: 80ch; }
+
+@media (max-width: 960px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; }
+  nav.toc .lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 20px; }
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+  ul.cl li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="toc" aria-label="Inhalt">
+  <div class="brand">VBB Fahrinfo-API<small>HAFAS ReST · Version 2.52</small></div>
+  <div class="lists">
+    <div>
+      <h4>Grundlagen</h4>
+      <ul>
+        <li><a href="#ueberblick">Überblick</a></li>
+        <li><a href="#schnellstart">Schnellstart</a></li>
+        <li><a href="#auth">Authentifizierung und Zugang</a></li>
+        <li><a href="#konventionen">Allgemeine Konventionen</a></li>
+        <li><a href="#ids">Haltestellen, Haltepunkte, IDs</a></li>
+        <li><a href="#linien">Linien und GlobalIds</a></li>
+        <li><a href="#produkte">Produktklassen</a></li>
+        <li><a href="#betreiber">Verkehrsunternehmen</a></li>
+        <li><a href="#echtzeit">Echtzeit</a></li>
+        <li><a href="#hinweise">Hinweise (Notes)</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#location-name"><code>location.name</code></a></li>
+        <li><a href="#location-nearbystops"><code>location.nearbystops</code></a></li>
+        <li><a href="#departureboard"><code>departureBoard</code></a></li>
+        <li><a href="#arrivalboard"><code>arrivalBoard</code></a></li>
+        <li><a href="#trip"><code>trip</code></a></li>
+        <li><a href="#journeydetail"><code>journeyDetail</code></a></li>
+        <li><a href="#recon"><code>recon</code></a></li>
+        <li><a href="#gisroute"><code>gisroute</code></a></li>
+        <li><a href="#journeypos"><code>journeypos</code></a></li>
+        <li><a href="#himsearch"><code>himsearch</code></a></li>
+        <li><a href="#datainfo"><code>datainfo</code></a></li>
+        <li><a href="#wadl"><code>wadl</code> / <code>xsd</code></a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Betrieb</h4>
+      <ul>
+        <li><a href="#fehler">Fehlerbehandlung</a></li>
+        <li><a href="#praxis">Gute Praxis</a></li>
+        <li><a href="#changelog">Changelog 2.49 → 2.52</a></li>
+        <li><a href="#migration">Migrations-Checkliste</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main>
+<div class="col">
+
+<header class="hero" id="ueberblick">
+  <div class="eyebrow">Entwickler*innen-Dokumentation · Stand 03.11.2026</div>
+  <h1>VBB Fahrinfo-API (HAFAS ReST 2.52)</h1>
+  <p class="lead">Die Fahrinfo-API liefert Soll- und Echtzeitdaten des öffentlichen Verkehrs in Berlin und Brandenburg: Haltestellensuche, Abfahrts- und Ankunftstafeln, Verbindungsauskunft, Fahrtverläufe, Fahrzeugpositionen, Störungsmeldungen und Tarifinformationen. Die Schnittstelle basiert auf der HAFAS ReST-API von HaCon und ersetzt zum 30.11.2026 den bisherigen Endpunkt <code>fahrinfo.vbb.de/restproxy</code> (Version 2.49).</p>
+  <dl class="facts">
+    <div><dt>Basis-URL Produktiv</dt><dd>https://vbb.hafas.cloud/api/fahrinfo/latest</dd></div>
+    <div><dt>Basis-URL Demo</dt><dd>https://vbb.demo.hafas.cloud/api/fahrinfo/latest</dd></div>
+    <div><dt>API-Version</dt><dd>dialectVersion 2.52 (Server 2.52.1)</dd></div>
+    <div><dt>Formate</dt><dd>JSON, XML (Standard)</dd></div>
+    <div><dt>Authentifizierung</dt><dd>accessId (Query-Parameter)</dd></div>
+    <div><dt>Fahrplanperiode</dt><dd>25.10.2026 – 11.12.2027</dd></div>
+    <div><dt>Abgedeckt</dt><dd>38 Unternehmen · 7 Produktklassen</dd></div>
+    <div><dt>Umstellung</dt><dd>30.11.2026</dd></div>
+    <div><dt>Kontakt</dt><dd><a href="mailto:api@vbb.de">api@vbb.de</a></dd></div>
+  </dl>
+</header>
+
+<div class="prose">
+
+<h2 id="schnellstart">Schnellstart</h2>
+<p>Die meisten Anwendungen kommen mit drei Aufrufen aus: Ort finden, Abfahrten anzeigen, Verbindung suchen. Ersetzen Sie in allen Beispielen <code>$ACCESS_ID</code> durch Ihre persönliche Zugangskennung. Die Beispiele verwenden die Basis-URL des Produktivsystems; mit einer Kennung für das <a href="#zugang">Demosystem</a> ersetzen Sie <code>vbb.hafas.cloud</code> durch <code>vbb.demo.hafas.cloud</code>.</p>
+
+<div class="steps">
+  <div>
+    <h4>Haltestelle per Name suchen</h4>
+    <p>Die Antwort enthält zu jeder Haltestelle die <code>extId</code> (z.&nbsp;B. <code>900100003</code> für S+U Alexanderplatz).</p>
+    <div class="code"><div class="lbl">Anfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/location.name?accessId=$ACCESS_ID&amp;input=Alexanderplatz&amp;type=S&amp;maxNo=5&amp;format=json"</pre></div>
+  </div>
+  <div>
+    <h4>Abfahrten an dieser Haltestelle abrufen</h4>
+    <p>Die Abfahrtstafel enthält Soll- und Echtzeit, Linie, Richtung und Gleis bzw. Steig.</p>
+    <div class="code"><div class="lbl">Anfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;duration=30&amp;format=json"</pre></div>
+  </div>
+  <div>
+    <h4>Verbindung zwischen zwei Haltestellen suchen</h4>
+    <p>Hier vom Alexanderplatz zum Zoologischen Garten (<code>900023201</code>).</p>
+    <div class="code"><div class="lbl">Anfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/trip?accessId=$ACCESS_ID&amp;originId=900100003&amp;destId=900023201&amp;format=json"</pre></div>
+  </div>
+</div>
+
+<h2 id="auth">Authentifizierung und Zugang</h2>
+<p>Jede Anfrage an einen Datendienst muss die persönliche Zugangskennung im Query-Parameter <code>accessId</code> enthalten (max. 128 Zeichen). Bestehende Kennungen aus der Version 2.49 gelten auch für die neue Schnittstelle.</p>
+<h3 id="zugang">Zugang beantragen</h3>
+<p>Der Zugang erfolgt in zwei Stufen: Zum Entwickeln und Testen erhalten Sie eine Kennung für das Demosystem, für den laufenden Betrieb Ihrer Anwendung den Zugang zum Produktivsystem.</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Demosystem</th><th>Produktivsystem</th></tr></thead>
+<tbody>
+<tr><td>Basis-URL</td><td><code>https://vbb.demo.hafas.cloud/api/fahrinfo/latest</code></td><td><code>https://vbb.hafas.cloud/api/fahrinfo/latest</code></td></tr>
+<tr><td>Zweck</td><td>Entwicklung, Tests, Ausprobieren</td><td>Stabiler privater oder öffentlicher Betrieb</td></tr>
+<tr><td>Beantragung</td><td>Formlose E-Mail an <a href="mailto:api@vbb.de">api@vbb.de</a></td><td><a href="https://unternehmen.vbb.de/digitale-services/api/zugang-produktivsystem/">Formular auf unternehmen.vbb.de</a></td></tr>
+<tr><td>Bedingungen</td><td>Keine vorherige Zustimmung nötig</td><td>Zustimmung zu vier Bedingungen (siehe unten)</td></tr>
+<tr><td>Anfragelimits</td><td>Strenger als im Produktivsystem</td><td>Individuell vereinbart</td></tr>
+</tbody></table></div>
+<h4>Demosystem</h4>
+<p>Für den Einstieg genügt eine formlose E-Mail an <a href="mailto:api@vbb.de">api@vbb.de</a>. Sie können die Schnittstelle dann unter <code>https://vbb.demo.hafas.cloud/api/fahrinfo/latest</code> sofort nutzen, ohne vorher Bedingungen zu akzeptieren. Das Demosystem bietet dieselben Services wie das Produktivsystem. Die Anfragelimits sind im Demosystem etwas strenger. Für den Betrieb einer Anwendung beantragen Sie anschließend den Zugang zum Produktivsystem.</p>
+<h4>Produktivsystem</h4>
+<p>Wenn Ihre Anwendung stabil läuft und privat oder öffentlich produktiv betrieben werden soll, beantragen Sie den Zugang zum Produktivsystem über das <a href="https://unternehmen.vbb.de/digitale-services/api/zugang-produktivsystem/">Formular auf unternehmen.vbb.de</a>. Geben Sie dort Name bzw. Firma und E-Mail-Adresse an sowie, falls vorhanden, Ihre aktuelle Kennung für das Demosystem. Die Zugangsinformationen erhalten Sie per E-Mail.</p>
+<p>Mit dem Antrag stimmen Sie vier Bedingungen zu:</p>
+<div class="tbl"><table>
+<thead><tr><th>Bedingung</th><th>Inhalt</th></tr></thead>
+<tbody>
+<tr><td>Datenstand</td><td>Der VBB erstellt die Daten sorgfältig, übernimmt aber keine Gewähr für Richtigkeit, Vollständigkeit und Aktualität.</td></tr>
+<tr><td>Ausfallzeiten</td><td>Es besteht kein Anspruch auf Nutzung. Der VBB bemüht sich um einen unterbrechungsfreien Betrieb, kann Ausfälle aber nicht ausschließen.</td></tr>
+<tr><td>Anfragevolumen</td><td>Anfragen sind effizient zu stellen. Bei übermäßiger Belastung kann der Zugang vorübergehend deaktiviert werden.</td></tr>
+<tr><td>Datenquelle</td><td>Der VBB wird als Quelle der Fahrplandaten genannt, zum Beispiel in den AGB oder im Impressum Ihrer Anwendung.</td></tr>
+</tbody></table></div>
+<p>Maßgeblich ist der Wortlaut im Formular. Fragen zum Zugang richten Sie an <a href="mailto:api@vbb.de">api@vbb.de</a>.</p>
+<h3>Anfragelimits</h3>
+<p>Im Produktivsystem wird die zulässige Anzahl an Anfragen für jede Kennung individuell mit dem VBB vereinbart; im Demosystem gelten etwas strengere Limits. Teilen Sie bei der Beantragung mit, welche Services Sie nutzen wollen und mit wie vielen Anfragen pro Tag und in Spitzenzeiten Sie rechnen. Wenn sich Ihr Bedarf ändert, etwa durch einen neuen Einsatzzweck oder deutlich mehr Nutzer*innen, melden Sie sich bitte vorab unter <a href="mailto:api@vbb.de">api@vbb.de</a>.</p>
+<div class="tbl"><table>
+<thead><tr><th>Situation</th><th>HTTP</th><th>errorCode</th></tr></thead>
+<tbody>
+<tr><td><code>accessId</code> fehlt</td><td class="num">400</td><td><code>API_PARAM</code> · „Missing value for required param accessId“</td></tr>
+<tr><td><code>accessId</code> unbekannt oder gesperrt</td><td class="num">401</td><td><code>API_AUTH</code> · „access denied for … on departureBoard“</td></tr>
+<tr><td>Kennung nicht für diesen Service freigeschaltet</td><td class="num">401</td><td><code>API_AUTH</code></td></tr>
+</tbody></table></div>
+<div class="note crit"><p><strong>Kennung schützen.</strong> Die <code>accessId</code> ist an Sie gebunden. Bauen Sie sie nicht in öffentlich ausgelieferten Browser- oder App-Code ein, sondern rufen Sie die API über Ihren eigenen Server auf. Die URL einer Anfrage enthält die Kennung im Klartext; achten Sie darauf, dass sie nicht in öffentlich einsehbaren Logs landet.</p></div>
+<p>Der Parameter <code>aid</code> (max. 64 Zeichen) überschreibt serverseitige Sicherheitseinstellungen und wird nur in Sonderkonfigurationen nach Absprache mit dem VBB benötigt.</p>
+
+<h2 id="konventionen">Allgemeine Konventionen</h2>
+
+<h3>Aufbau einer Anfrage</h3>
+<div class="endpoint"><span class="m">GET</span><span class="p">https://vbb.hafas.cloud/api/fahrinfo/latest/<b>{service}</b>?accessId=…&amp;{parameter}</span></div>
+<p>Alle Parameter werden als URL-Query übergeben und müssen URL-kodiert sein (insbesondere <code>|</code>, <code>@</code>, <code>×</code>, Leerzeichen und Umlaute in IDs und Kontexten). Empfohlen ist <code>GET</code>; <code>POST</code> mit Query-Parametern wird ebenfalls angenommen.</p>
+
+<h3>Parameter, die jeder Service kennt</h3>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>accessId</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Zugangskennung, max. 128 Zeichen.</td></tr>
+<tr><td><code>format</code></td><td>string</td><td>–</td><td><code>json</code> oder <code>xml</code>. Ohne Angabe wird der <code>Accept</code>-Header ausgewertet, fehlt auch dieser, antwortet der Server mit XML.</td></tr>
+<tr><td><code>lang</code></td><td>string</td><td><code>de</code></td><td>Sprache für Texte und Hinweise, z.&nbsp;B. <code>en</code> („Handicap accessible“ statt „barrierefrei“). Haltestellen- und Richtungsnamen bleiben unverändert.</td></tr>
+<tr><td><code>requestId</code></td><td>string</td><td>–</td><td>Eigene Kennung zur Nachverfolgung, max. 2048 Zeichen. Wird in der Antwort als <code>requestId</code> zurückgegeben.</td></tr>
+<tr><td><code>aid</code></td><td>string</td><td>–</td><td>Siehe <a href="#auth">Authentifizierung</a>.</td></tr>
+</tbody></table></div>
+
+<h3>Datentypen und Schreibweisen</h3>
+<div class="tbl"><table>
+<thead><tr><th>Art</th><th>Format</th><th>Beispiel</th></tr></thead>
+<tbody>
+<tr><td>Datum</td><td><code>YYYY-MM-DD</code></td><td><code>date=2026-11-03</code></td></tr>
+<tr><td>Uhrzeit</td><td><code>hh:mm[:ss]</code>, 24&nbsp;h, Sekunden werden ignoriert</td><td><code>time=07:45</code></td></tr>
+<tr><td>Zeitzone</td><td>Alle Zeiten sind lokale Zeit Europe/Berlin</td><td><code>"time":"09:52:00"</code></td></tr>
+<tr><td>Dauer (Antwort)</td><td>ISO 8601</td><td><code>"duration":"PT12M"</code></td></tr>
+<tr><td>Schalter</td><td><code>0</code>/<code>1</code> oder <code>false</code>/<code>true</code></td><td><code>passlist=1</code></td></tr>
+<tr><td>Koordinaten</td><td>WGS84, Dezimalgrad mit Punkt</td><td><code>originCoordLat=52.521508</code></td></tr>
+<tr><td>Listen</td><td>kommagetrennt</td><td><code>lines=U5,S3</code></td></tr>
+<tr><td>Ausschluss</td><td><code>!</code> vor dem Wert</td><td><code>categories=!Bus</code></td></tr>
+<tr><td>Preise</td><td>Cent als Ganzzahl</td><td><code>"price":500</code> = 5,00&nbsp;€</td></tr>
+</tbody></table></div>
+<div class="note warn"><p><strong>Unbekannte Parameter werden ignoriert.</strong> Ein falsch geschriebener Filter (z.&nbsp;B. <code>lineids</code> am <code>departureBoard</code>, der dort nicht existiert) führt nicht zu einem Fehler, sondern zu einem ungefilterten Ergebnis. Prüfen Sie Parameternamen gegen die Tabellen in dieser Dokumentation oder die <a href="#wadl">WADL</a>. Ungültige <em>Werte</em> bekannter Parameter (z.&nbsp;B. <code>duration=5000</code>) werden dagegen mit <code>400 API_PARAM</code> abgelehnt.</p></div>
+
+<h3>Antwortformat</h3>
+<p>Jede erfolgreiche JSON-Antwort enthält neben den Nutzdaten diese Metadaten:</p>
+<div class="code"><div class="lbl">Metadaten (Auszug)</div><pre>{
+  "TechnicalMessages": { "TechnicalMessage": [ { "key": "requestTime", "value": "2026-11-03 09:49:46" } ] },
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52",
+  "planRtTs": "2026-11-03T09:49:24.000+01:00"
+}</pre></div>
+<p><code>planRtTs</code> ist der Zeitstempel des zuletzt eingespielten Echtzeitstands. Listen erscheinen in JSON immer als Array, auch bei nur einem Element. Felder ohne Wert werden weggelassen, nicht als <code>null</code> geliefert; behandeln Sie daher jedes Feld als optional.</p>
+<p>Jede Antwort trägt außerdem einen Header <code>X-Request-ID</code>. Geben Sie diesen Wert bei Supportanfragen an.</p>
+
+<h3>Transport</h3>
+<ul>
+  <li><strong>Kompression:</strong> Senden Sie <code>Accept-Encoding: gzip</code>. Antworten werden dann komprimiert; bei den umfangreichen JSON-Antworten spart das einen Großteil der Datenmenge.</li>
+  <li><strong>CORS:</strong> Der Server beantwortet Preflight-Anfragen und erlaubt Aufrufe aus dem Browser. Beachten Sie trotzdem den Hinweis zum Schutz der Kennung.</li>
+  <li><strong>Zeichensatz:</strong> UTF-8.</li>
+  <li><strong>Antwortzeiten:</strong> Einfache Abfragen benötigen meist unter einer Sekunde, Verbindungsauskünfte mit Tarif und Polylinien bis zu einige Sekunden. Setzen Sie Client-Timeouts nicht unter 10&nbsp;Sekunden.</li>
+</ul>
+
+<h2 id="ids">Haltestellen, Haltepunkte und IDs</h2>
+<p>Die Version 2.52 bildet die Haltestellen-Hierarchie des VBB vollständig ab. Das ist die wichtigste fachliche Neuerung gegenüber 2.49.</p>
+<div class="tbl"><table>
+<thead><tr><th>Ebene</th><th>Begriff in der API</th><th>extId</th><th>Beispiel</th></tr></thead>
+<tbody>
+<tr><td>Haltestelle</td><td><code>mainMast</code>, <code>isMainMast: true</code></td><td><code>900xxxxxx</code></td><td><code>900100003</code> S+U Alexanderplatz Bhf</td></tr>
+<tr><td>Haltepunkt / Steig / Gleis</td><td>Mast, <code>hasMainMast: true</code></td><td><code>300xxxxxx</code></td><td><code>300003233</code> S-Bahnsteig Gleis 3</td></tr>
+</tbody></table></div>
+<p>In Antworten steht an Abfahrten, Ankünften, Fahrtabschnitten und Halten nun die <strong>Haltepunkt-ID</strong> (<code>stopExtId: "300306026"</code>). Die zugehörige Haltestelle finden Sie in <code>mainMastExtId</code> bzw. im eingebetteten Objekt <code>mainMast</code>:</p>
+<div class="code"><div class="lbl">Abfahrt (Auszug)</div><pre>{
+  "stop": "S+U Alexanderplatz Bhf/Gontardstr. (Berlin)",
+  "stopExtId": "300306026",
+  "hasMainMast": true,
+  "mainMastExtId": "900100026",
+  "altId": ["A×de:11000:900100026::1", "b×BVG_301008802"],
+  "mainMastAltId": ["A×de:11000:900100026", "b×BVG_100026"],
+  "track": "Pos. 15"
+}</pre></div>
+<h4>Welche ID wofür?</h4>
+<ul>
+  <li><strong>Als Eingabe</strong> (<code>id</code>, <code>originId</code>, <code>destId</code>, <code>viaId</code> …) sind 9-stellige Haltestellen-IDs (<code>900…</code>) weiterhin die richtige Wahl. Haltepunkt-IDs (<code>300…</code>) werden ebenfalls akzeptiert.</li>
+  <li><strong>Zum Speichern und Abgleichen</strong> eignen sich <code>mainMastExtId</code> oder die bundesweite <strong>DHID</strong> (Format IFOPT) aus <code>altId</code> mit Präfix <code>A×</code>, z.&nbsp;B. <code>de:11000:900100003</code> (Haltestelle) und <code>de:11000:900100003:2:52</code> (Steig). Die DHID steht zusätzlich als Hinweis mit Schlüssel <code>IF</code> in den Notes.</li>
+  <li>Der lange HAFAS-Lid-String (<code>"id": "A=1@O=…@L=900100003@…"</code>) kann als Eingabe verwendet werden, enthält aber Versionsanteile (<code>@p=…</code>) und eignet sich nicht zum dauerhaften Speichern.</li>
+</ul>
+<p>Weitere Präfixe in <code>altId</code>: <code>b×</code> kennzeichnet unternehmensspezifische IDs (z.&nbsp;B. <code>b×BVG_100026</code>, <code>b×DBS_8089001</code>).</p>
+
+<h2 id="linien">Linien und GlobalIds</h2>
+<p>Jedes Produkt (<code>Product</code>, <code>ProductAtStop</code>, <code>productAtStop</code>) enthält ab 2.52 ein Objekt <code>LineInfo</code> mit stabilen, systemübergreifenden Linien-IDs:</p>
+<div class="code"><div class="lbl">LineInfo</div><pre>"LineInfo": {
+  "GlobalIds": [ { "id": "de:VBB:11000000|Tram|M4:", "type": "A" } ],
+  "lineId": "de:VBB:11000000|Tram|M4:"
+}</pre></div>
+<p>Zum Filtern nach diesen IDs dient der neue Parameter <code>globallineids</code>. Der Wert muss den Typ als Präfix tragen, getrennt durch das Zeichen <code>×</code> (U+00D7, URL-kodiert <code>%C3%97</code>):</p>
+<div class="code"><div class="lbl">Nur Tram M4<button class="copy" type="button">Kopieren</button></div><pre>…/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;format=json
+   &amp;globallineids=A%C3%97de%3AVBB%3A11000000%7CTram%7CM4%3A</pre></div>
+<div class="note warn"><p><strong>Ohne Präfix keine Treffer.</strong> <code>globallineids=de:VBB:11000000|Tram|M4:</code> (ohne <code>A×</code>) liefert eine leere Tafel, keinen Fehler.</p></div>
+<p>Für einfache Fälle genügt der Filter <code>lines</code> mit dem angezeigten Liniennamen (<code>lines=U5</code>).</p>
+
+<h2 id="produkte">Produktklassen</h2>
+<p>Der Parameter <code>products</code> ist eine Bitmaske. Addieren Sie die Werte der gewünschten Klassen: <code>products=3</code> liefert S- und U-Bahn, <code>products=127</code> alle Klassen. Die Farben stammen aus <code>datainfo</code> und können für die Darstellung verwendet werden.</p>
+<div class="tbl"><table>
+<thead><tr><th>Bit</th><th>Klasse</th><th>catOut (Beispiele)</th><th>Farbe</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td><span class="prod" style="background:#37874A">S</span> S-Bahn</td><td><code>S</code></td><td class="num">#37874A</td></tr>
+<tr><td class="num">2</td><td><span class="prod" style="background:#003399">U</span> U-Bahn</td><td><code>U</code></td><td class="num">#003399</td></tr>
+<tr><td class="num">4</td><td><span class="prod" style="background:#CC0000">Tram</span> Tram</td><td><code>Tram</code></td><td class="num">#CC0000</td></tr>
+<tr><td class="num">8</td><td><span class="prod" style="background:#993399">Bus</span> Bus (inkl. Rufbus, Kleinbus)</td><td><code>Bus</code></td><td class="num">#993399</td></tr>
+<tr><td class="num">16</td><td><span class="prod" style="background:#0089C8">F</span> Fähre</td><td><code>Fähre</code></td><td class="num">#0089C8</td></tr>
+<tr><td class="num">32</td><td><span class="prod" style="background:#7D8185">FV</span> Bahn-Fernverkehr</td><td><code>ICE</code>, <code>IC</code>, <code>EC</code>, <code>RJ</code>, <code>NJ</code>, <code>EN</code>, <code>TLK</code>, <code>RJX</code>, <code>DRF</code></td><td class="num">#7D8185</td></tr>
+<tr><td class="num">64</td><td><span class="prod" style="background:#E20019">RE</span> Bahn-Regionalverkehr</td><td><code>RE</code>, <code>RB</code>, <code>R</code>, <code>BKB</code></td><td class="num">#E20019</td></tr>
+</tbody></table></div>
+<p>Der Filter <code>categories</code> arbeitet mit den Kategorie-Codes (<code>catOut</code>), z.&nbsp;B. <code>categories=!Bus</code> für alles außer Bus. Linienfarben einzelner Linien (z.&nbsp;B. S3 <code>#0066AD</code>) stehen pro Produkt in <code>icon.backgroundColor</code>.</p>
+
+<h2 id="betreiber">Verkehrsunternehmen</h2>
+<p>Der Filter <code>operators</code> akzeptiert das Kürzel (<code>nameS</code>) oder den vollen Namen. Die numerische <code>id</code> wird nicht als Filterwert erkannt. Die aktuelle Liste liefert <a href="#datainfo"><code>datainfo</code></a>; Stand 03.11.2026:</p>
+<div class="tbl"><table>
+<thead><tr><th>Kürzel</th><th>Name</th><th>Kürzel</th><th>Name</th></tr></thead>
+<tbody>
+<tr><td><code>BVG</code></td><td>Berliner Verkehrsbetriebe</td><td><code>DBS</code></td><td>S-Bahn Berlin GmbH</td></tr>
+<tr><td><code>DB</code></td><td>DB Regio AG</td><td><code>ODE</code></td><td>ODEG Ostdeutsche Eisenbahn GmbH</td></tr>
+<tr><td><code>NEB</code></td><td>NEB Betriebsgesellschaft mbH</td><td><code>HAN</code></td><td>Hanseatische Eisenbahn</td></tr>
+<tr><td><code>MRB</code></td><td>Mitteldeutsche Regiobahn</td><td><code>FLX</code></td><td>FlixTrain GmbH</td></tr>
+<tr><td><code>goo</code></td><td>go.on Gesellschaft für Bus- und Schienenverkehr mbH</td><td><code>STE</code></td><td>Strausberger Eisenbahn GmbH</td></tr>
+<tr><td><code>BUK</code></td><td>Buckower Kleinbahn</td><td><code>SRS</code></td><td>Schöneicher Rüdersdorfer Straßenbahn GmbH</td></tr>
+<tr><td><code>ViP</code></td><td>Verkehrsbetrieb Potsdam GmbH</td><td><code>CV</code></td><td>Cottbusverkehr GmbH</td></tr>
+<tr><td><code>SVF</code></td><td>Stadtverkehrsgesellschaft mbH Frankfurt (Oder)</td><td><code>VBB</code></td><td>Verkehrsbetriebe Brandenburg an der Havel GmbH</td></tr>
+<tr><td><code>HAV</code></td><td>Havelbus Verkehrsgesellschaft mbH</td><td><code>reg</code></td><td>regiobus Potsdam Mittelmark GmbH</td></tr>
+<tr><td><code>OVG</code></td><td>Oberhavel Verkehrsgesellschaft mbH</td><td><code>BBG</code></td><td>Barnimer Busgesellschaft mbH</td></tr>
+<tr><td><code>VTF</code></td><td>Verkehrsgesellschaft Teltow-Fläming mbH</td><td><code>RVS</code></td><td>Regionale Verkehrsgesellschaft Dahme-Spreewald mbH</td></tr>
+<tr><td><code>VME</code></td><td>Verkehrsmanagement Elbe-Elster GmbH</td><td><code>VGO</code></td><td>Verkehrsgesellschaft Oberspreewald-Lausitz mbH</td></tr>
+<tr><td><code>mob</code></td><td>mobus Märkisch-Oderland Bus GmbH</td><td><code>BOS</code></td><td>Busverkehr Oder-Spree GmbH</td></tr>
+<tr><td><code>UVG</code></td><td>Uckermärkische Verkehrsgesellschaft mbH</td><td><code>ORP</code></td><td>ORP Ostprignitz-Ruppiner Personennahverkehrsgesellschaft mbH</td></tr>
+<tr><td><code>VGP</code></td><td>VG Prignitz mbH</td><td><code>SPN</code></td><td>Spree-Neiße-Cottbusverkehr</td></tr>
+<tr><td><code>DRO</code></td><td>DB Regio Bus Ost GmbH</td><td><code>PVG</code></td><td>Personenverkehrsgesellschaft Altmarkkreis Salzwedel mbH</td></tr>
+<tr><td><code>SDL</code></td><td>stendalbus</td><td><code>NJL</code></td><td>Nahverkehrsgesellschaft Jerichower Land mbH</td></tr>
+<tr><td><code>MWM</code></td><td>MWM-Solutions GmbH</td><td><code>Ang</code></td><td>Günter Anger Güterverkehrs GmbH &amp; Co. Omnibusvermietung KG</td></tr>
+<tr><td><code>SCH</code></td><td>Busverkehr Gerd Schmidt</td><td><code>VET</code></td><td>Vetter GmbH</td></tr>
+</tbody></table></div>
+
+<h2 id="echtzeit">Echtzeit</h2>
+<p>Wo Echtzeitdaten vorliegen, stehen sie neben den Solldaten in Feldern mit Präfix <code>rt</code>:</p>
+<div class="tbl"><table>
+<thead><tr><th>Soll</th><th>Echtzeit</th><th>Bedeutung</th></tr></thead>
+<tbody>
+<tr><td><code>time</code>, <code>date</code></td><td><code>rtTime</code>, <code>rtDate</code></td><td>Abfahrts- bzw. Ankunftszeit</td></tr>
+<tr><td><code>track</code>, <code>platform</code></td><td><code>rtTrack</code>, <code>rtPlatform</code></td><td>Gleis / Steig</td></tr>
+<tr><td><code>depTime</code>, <code>arrTime</code></td><td><code>rtDepTime</code>, <code>rtArrTime</code></td><td>Zeiten an Zwischenhalten</td></tr>
+<tr><td><code>duration</code></td><td><code>rtDuration</code></td><td>Reisedauer einer Verbindung</td></tr>
+</tbody></table></div>
+<ul>
+  <li><code>cancelled: true</code> kennzeichnet ausgefallene Fahrten, <code>partCancelled</code> Teilausfälle, <code>reachable</code> die Erreichbarkeit eines Anschlusses.</li>
+  <li><code>prognosisType</code> gibt die Quelle an, z.&nbsp;B. <code>PROGNOSED</code>.</li>
+  <li><code>JourneyStatus</code>: <code>P</code> = planmäßige Fahrt. Weitere Werte kennzeichnen Ersatz-, Zusatz- und Sonderfahrten; die vollständige Liste steht im <a href="#wadl">XML-Schema</a>.</li>
+  <li>Mit <code>rtMode</code> steuern Sie die Echtzeitberücksichtigung: <code>OFF</code> (reiner Fahrplan), <code>SERVER_DEFAULT</code>, bei <code>trip</code>/<code>journeyDetail</code>/<code>recon</code> zusätzlich <code>FULL</code>, <code>INFOS</code>, <code>REALTIME</code>.</li>
+</ul>
+<p>Tafeln berücksichtigen verspätete Fahrten: Eine um 09:46 geplante, auf 09:52 verspätete Abfahrt erscheint auch bei einer Anfrage um 09:50.</p>
+<div class="note" id="gtfs-rt"><p><strong>Alternative: GTFS-Realtime-Feed.</strong> Wenn Sie Echtzeitdaten für das gesamte Netz brauchen, statt einzelne Tafeln, Verbindungen oder Fahrten abzufragen, nutzen Sie den GTFS-RT-Feed des VBB unter <a href="https://production.gtfsrt.vbb.de/data"><code>https://production.gtfsrt.vbb.de/data</code></a>. Er ergänzt den GTFS-Fahrplandatensatz des VBB um Echtzeitdaten. Den Fahrplandatensatz mit den reinen Solldaten laden Sie immer aktuell über <a href="https://vbb.de/gtfs"><code>vbb.de/gtfs</code></a>.</p>
+<ul>
+  <li>Der Feed braucht keine Zugangskennung und steht unter der Lizenz CC-BY 4.0.</li>
+  <li>CORS ist aktiviert. Der Feed wird mit <code>ETag</code> und auf Anfrage gzip- oder zstd-komprimiert ausgeliefert.</li>
+  <li>Die Zahl der Abrufe ist begrenzt. Das aktuelle Limit, Statusmeldungen (Atom-Feed <code>/news.atom.xml</code>) und Hinweise zur Nutzung stehen auf <a href="https://production.gtfsrt.vbb.de">production.gtfsrt.vbb.de</a>.</li>
+  <li>Der Quellcode liegt auf GitHub unter <a href="https://github.com/OpenDataVBB">OpenDataVBB</a>.</li>
+</ul>
+<p>Für Verbindungsauskünfte, Umgebungssuche, Fußwege und Störungsmeldungen bleibt diese Schnittstelle das passende Werkzeug.</p></div>
+
+<h2 id="hinweise">Hinweise (Notes)</h2>
+<p>Haltestellen, Halte und Fahrten tragen Hinweise als Liste von <code>{ key, type, value, txtN, priority }</code>. <code>type: "A"</code> sind Attribute für die Anzeige (z.&nbsp;B. Ausstattung), <code>type: "I"</code> sind interne oder technische Informationen. Beobachtete Schlüssel:</p>
+<div class="tbl"><table>
+<thead><tr><th>key</th><th>Typ</th><th>Inhalt</th><th>Beispiel</th></tr></thead>
+<tbody>
+<tr><td><code>IF</code></td><td>I</td><td>DHID der Haltestelle bzw. des Steigs</td><td><code>de:11000:900100003:2:52</code></td></tr>
+<tr><td><code>Nd</code> / <code>Ne</code></td><td>I</td><td>Steigbezeichnung lang, deutsch / englisch</td><td>„S-Bahnsteig Gleis 3“ / „Platform track 3“</td></tr>
+<tr><td><code>Nf</code> / <code>Nu</code> / <code>NF</code></td><td>I</td><td>Steigbezeichnung kurz bzw. Varianten</td><td>„Tramsteig Gontardstraße ht. Rathausstraße Pos. 15“</td></tr>
+<tr><td><code>SP</code></td><td>I</td><td>Steigposition</td><td><code>15</code></td></tr>
+<tr><td><code>LV</code></td><td>I</td><td>Ebene (Stockwerk) des Steigs</td><td><code>-3</code>, <code>0</code>, <code>1</code></td></tr>
+<tr><td><code>BN</code></td><td>A</td><td>Steigbeschreibung für die Anzeige</td><td>„S-Bahnsteig Gleis 1“</td></tr>
+<tr><td><code>RO</code> / <code>AU</code></td><td>A</td><td>Rolltreppe / Aufzug vorhanden</td><td>„Rolltreppe“, „Aufzug“</td></tr>
+<tr><td><code>bf</code>, <code>B=</code>, <code>B-</code></td><td>A</td><td>Barrierefreiheit</td><td>„barrierefrei“, „nicht barrierefrei“</td></tr>
+<tr><td><code>FB</code></td><td>A</td><td>Fahrradmitnahme möglich</td><td>„Fahrradmitnahme möglich“</td></tr>
+<tr><td><code>QR</code></td><td>I</td><td>Haltestellen-QR-Code eines Unternehmens</td><td><code>BVG;308802</code></td></tr>
+</tbody></table></div>
+<p>Die Liste ist nicht abschließend. Zeigen Sie unbekannte Attribute (<code>type: "A"</code>) über <code>txtN</code> an, statt sie zu verwerfen. Mit <code>baim=1</code> liefern <code>trip</code>, <code>journeyDetail</code>, Tafeln und <code>gisroute</code> zusätzliche Barrierefreiheits-Informationen (BAIM).</p>
+
+</div><!-- /prose -->
+
+<hr class="sep">
+
+<!-- ============================ location.name ============================ -->
+<h2 id="location-name">location.name: Orte nach Namen suchen</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>location.name</b></span></div>
+<div class="prose">
+<p>Findet Haltestellen, Adressen und Points of Interest zu einer Texteingabe. Typischer Einsatz: Autovervollständigung im Suchfeld, Auflösung von Haltestellennamen in IDs.</p>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>input</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Suchbegriff, max. 512 Zeichen. Teileingaben wie „Alexanderpl“ werden ergänzt.</td></tr>
+<tr><td><code>type</code></td><td>enum</td><td><code>ALL</code></td><td><code>S</code> Haltestellen · <code>A</code> Adressen · <code>P</code> POI · <code>SA</code>, <code>SP</code>, <code>AP</code> Kombinationen · <code>ALL</code> alles</td></tr>
+<tr><td><code>maxNo</code></td><td>int</td><td class="num">10</td><td>Maximale Trefferzahl, 1–1000.</td></tr>
+<tr><td><code>products</code></td><td>int</td><td>–</td><td>Nur Haltestellen mit diesen <a href="#produkte">Produktklassen</a>.</td></tr>
+<tr><td><code>operators</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Nur Orte, die von diesen Unternehmen bedient werden. Negation mit <code>!</code>.</td></tr>
+<tr><td><code>coordLat</code>, <code>coordLong</code></td><td>double</td><td>–</td><td>Mittelpunkt, um Treffer in der Nähe zu bevorzugen oder einzuschränken.</td></tr>
+<tr><td><code>r</code></td><td>int</td><td class="num">1000</td><td>Radius in Metern um <code>coordLat/coordLong</code>.</td></tr>
+<tr><td><code>filterMode</code></td><td>enum</td><td><code>DIST_PERI</code></td><td><code>DIST_PERI</code> Nähe gewichtet · <code>EXCL_PERI</code> nur außerhalb · <code>SLCT_PERI</code> nur innerhalb des Radius.</td></tr>
+<tr><td><code>withEquivalentLocations</code></td><td>bool</td><td>false</td><td>Gleichwertige Haltestellen (gleicher Knoten) als <code>equivalentStopLocation</code> mitliefern.</td></tr>
+<tr><td><code>withProducts</code></td><td>bool</td><td>true</td><td>Liste der Linien je Haltestelle (<code>productAtStop</code>) mitliefern. Auf <code>0</code> setzen verkleinert die Antwort deutlich.</td></tr>
+<tr><td><code>productRepresentatives</code></td><td>bool</td><td>–</td><td>Pro Kategorie nur ein repräsentatives Produkt.</td></tr>
+<tr><td><code>locationSelectionMode</code></td><td>enum</td><td>–</td><td><code>SLCT_N</code> normal · <code>SLCT_A</code> nur für Abfahrtstafeln geeignete Orte.</td></tr>
+<tr><td><code>restrictSelection</code></td><td>enum</td><td><code>S</code></td><td>Einschränkung erlaubter Stationen (<code>S</code>, <code>D</code>, <code>I</code>, <code>V</code>).</td></tr>
+<tr><td><code>stations</code></td><td>string</td><td>–</td><td>Nur IDs, die mit diesen Präfixen beginnen.</td></tr>
+<tr><td><code>sattributes</code></td><td>string</td><td>–</td><td>Filter auf Haltestellen-Attribute, Negation mit <code>!</code>.</td></tr>
+<tr><td><code>sinfotexts</code></td><td>string</td><td>–</td><td>Filter auf Infotexte, Format <code>code|wert</code>.</td></tr>
+<tr><td><code>meta</code></td><td>string</td><td>–</td><td>Vordefinierter Filter der Installation.</td></tr>
+<tr><td><code>poolId</code></td><td>string</td><td>–</td><td>Filter auf Pool-UIC-Codes.</td></tr>
+<tr><td><code>refineId</code></td><td>string</td><td>–</td><td>ID eines verfeinerbaren Treffers aus einer vorherigen Antwort.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/location.name?accessId=$ACCESS_ID&amp;input=Zoologischer%20Garten&amp;type=S&amp;maxNo=3&amp;withProducts=0&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "stopLocationOrCoordLocation": [
+    {
+      "StopLocation": {
+        "id": "A=1@O=S+U Zoologischer Garten Bhf (Berlin)@X=13332711@Y=52506919@U=86@L=900023201@p=1793325983@",
+        "extId": "900023201",
+        "name": "S+U Zoologischer Garten Bhf (Berlin)",
+        "lon": 13.332711,
+        "lat": 52.506919,
+        "weight": 24772,
+        "products": 107,
+        "isMainMast": true,
+        "altId": ["A×de:11000:900023201", "b×BVG_23201", "b×DBS_23201"],
+        "LocationNotes": { "LocationNote": [
+          { "key": "IF", "type": "I", "value": "de:11000:900023201", "txtN": "de:11000:900023201" }
+        ] }
+      }
+    },
+    { "StopLocation": { "extId": "900023172", "name": "S+U Zoologischer Garten/Jebensstr. (Berlin)", "products": 8, "isMainMast": true } },
+    { "StopLocation": { "extId": "900066102", "name": "S Botanischer Garten (Berlin)", "products": 9, "isMainMast": true } }
+  ],
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52"
+}</pre></div>
+<div class="prose">
+<p>Adressen und POIs erscheinen als <code>CoordLocation</code> mit <code>type</code> <code>ADR</code> bzw. <code>POI</code>, Koordinaten und Namen. Für eine Verbindungsauskunft zu einer Adresse übergeben Sie deren <code>lat</code>/<code>lon</code> als <code>originCoordLat</code>/<code>originCoordLong</code>.</p>
+<div class="note info"><p><strong>Antwortgröße.</strong> Ohne <code>withProducts=0</code> enthält jeder Haltestellentreffer die vollständige Linienliste und gleichwertige Haltestellen. Für „Alexanderplatz“ mit 10 Treffern sind das über 200&nbsp;KB. Für Autovervollständigung reicht <code>withProducts=0</code>.</p></div>
+</div>
+
+<!-- ============================ nearbystops ============================ -->
+<h2 id="location-nearbystops">location.nearbystops: Orte in der Umgebung</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>location.nearbystops</b></span></div>
+<div class="prose"><p>Liefert Haltestellen (und optional POIs) rund um eine Koordinate, sortiert nach Entfernung (<code>dist</code> in Metern).</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>originCoordLat</code> <span class="badge b-req">Pflicht</span></td><td>double</td><td>–</td><td>Breitengrad des Mittelpunkts.</td></tr>
+<tr><td><code>originCoordLong</code> <span class="badge b-req">Pflicht</span></td><td>double</td><td>–</td><td>Längengrad des Mittelpunkts.</td></tr>
+<tr><td><code>r</code></td><td>int</td><td class="num">1000</td><td>Suchradius in Metern.</td></tr>
+<tr><td><code>maxNo</code></td><td>int</td><td class="num">10</td><td>Maximale Trefferzahl, 1–1000.</td></tr>
+<tr><td><code>type</code></td><td>string</td><td><code>S</code></td><td><code>S</code> Haltestellen · <code>P</code> POI · <code>SP</code> beides.</td></tr>
+<tr><td><code>products</code></td><td>int</td><td>–</td><td>Produkt-Bitmaske.</td></tr>
+<tr><td><code>date</code>, <code>time</code></td><td>string</td><td>jetzt</td><td>Bezugszeitpunkt für zeitabhängige Verfügbarkeit.</td></tr>
+<tr><td><code>duration</code> <span class="badge b-new">neu</span></td><td>int</td><td class="num">40320</td><td>Zeitraum in Minuten (1–40320), für den die Verfügbarkeit eines Orts geprüft wird.</td></tr>
+<tr><td><code>zoom</code></td><td>int</td><td>–</td><td>Kartenzoomstufe 0–21; liefert die für diese Zoomstufe relevantesten Haltestellen.</td></tr>
+<tr><td><code>poiCategories</code></td><td>string</td><td>–</td><td>POI-Kategorien, Negation mit <code>!</code>.</td></tr>
+<tr><td><code>locationSelectionMode</code>, <code>meta</code>, <code>poolId</code>, <code>sattributes</code>, <code>sinfotexts</code></td><td></td><td></td><td>Wie bei <a href="#location-name"><code>location.name</code></a>.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/location.nearbystops?accessId=$ACCESS_ID&amp;originCoordLat=52.521508&amp;originCoordLong=13.411267&amp;r=500&amp;maxNo=10&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "stopLocationOrCoordLocation": [
+    {
+      "StopLocation": {
+        "extId": "300003233",
+        "name": "S+U Alexanderplatz Bhf (Berlin)",
+        "lon": 13.411223,
+        "lat": 52.521517,
+        "dist": 3,
+        "products": 67,
+        "hasMainMast": true,
+        "mainMastExtId": "900100003",
+        "altId": ["A×de:11000:900100003:2:52"],
+        "LocationNotes": { "LocationNote": [
+          { "key": "Nd", "type": "I", "value": "S-Bahnsteig Gleis 3" },
+          { "key": "Ne", "type": "I", "value": "Platform track 3" }
+        ] }
+      }
+    },
+    { "StopLocation": { "extId": "300003234", "name": "S+U Alexanderplatz Bhf (Berlin)", "dist": 10, "mainMastExtId": "900100003" } }
+  ]
+}</pre></div>
+<div class="prose">
+<p>Die Umgebungssuche liefert Haltepunkte (<code>300…</code>) mit Verweis auf ihre Haltestelle. Für eine Liste eindeutiger Haltestellen gruppieren Sie die Treffer nach <code>mainMastExtId</code>.</p>
+</div>
+
+<!-- ============================ departureBoard ============================ -->
+<h2 id="departureboard">departureBoard: Abfahrtstafel</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>departureBoard</b></span></div>
+<div class="prose"><p>Liefert die Abfahrten an einer Haltestelle in einem Zeitfenster, mit Echtzeit, Gleis/Steig und optional dem weiteren Fahrtverlauf.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="4">Ort und Zeit</td></tr>
+<tr><td><code>id</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Haltestellen- oder Haltepunkt-ID. <code>extId</code> ist veraltet, funktioniert aber weiterhin.</td></tr>
+<tr><td><code>date</code></td><td>string</td><td>heute</td><td>Startdatum <code>YYYY-MM-DD</code>.</td></tr>
+<tr><td><code>time</code></td><td>string</td><td>jetzt</td><td>Startzeit <code>hh:mm</code>.</td></tr>
+<tr><td><code>duration</code></td><td>int</td><td class="num">60</td><td>Länge des Zeitfensters in Minuten, 0–1439.</td></tr>
+<tr><td><code>maxJourneys</code></td><td>int</td><td class="num">-1</td><td>Maximale Anzahl Abfahrten; <code>-1</code> = alle im Zeitfenster.</td></tr>
+<tr><td><code>type</code></td><td>enum</td><td><code>DEP</code></td><td><code>DEP</code> wie konfiguriert (Haltestelle inkl. aller Steige) · <code>DEP_MAST</code> nur der angefragte Haltepunkt · <code>DEP_STATION</code> alle Masten der Haltestelle · <code>DEP_EQUIVS</code> zusätzlich gleichwertige Haltestellen.</td></tr>
+<tr class="grp"><td colspan="4">Filter</td></tr>
+<tr><td><code>products</code></td><td>int</td><td>–</td><td>Produkt-Bitmaske, z.&nbsp;B. <code>1</code> = nur S-Bahn.</td></tr>
+<tr><td><code>lines</code></td><td>string</td><td>–</td><td>Liniennamen, z.&nbsp;B. <code>U5,S3</code>; <code>!M4</code> schließt aus.</td></tr>
+<tr><td><code>globallineids</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Globale Linien-IDs mit Typpräfix, siehe <a href="#linien">Linien</a>.</td></tr>
+<tr><td><code>operators</code></td><td>string</td><td>–</td><td>Unternehmen (Kürzel oder Name), Negation mit <code>!</code>.</td></tr>
+<tr><td><code>categories</code></td><td>string</td><td>–</td><td>Kategorien (<code>catOut</code>), Negation mit <code>!</code>.</td></tr>
+<tr><td><code>direction</code></td><td>string</td><td>–</td><td>Nur Fahrten, die über diese Haltestelle (ID) fahren.</td></tr>
+<tr><td><code>platforms</code></td><td>string</td><td>–</td><td>Nur diese Gleise/Steige, kommagetrennt.</td></tr>
+<tr><td><code>attributes</code></td><td>string</td><td>–</td><td>Fahrt-Attribute, Negation mit <code>!</code>.</td></tr>
+<tr><td><code>minDur</code></td><td>int</td><td>–</td><td>Mindestrestfahrzeit einer Fahrt in Minuten.</td></tr>
+<tr class="grp"><td colspan="4">Ausgabe</td></tr>
+<tr><td><code>passlist</code></td><td>bool</td><td>false</td><td>Folgende Halte jeder Fahrt als <code>Stops.Stop[]</code> mitliefern.</td></tr>
+<tr><td><code>passlistMaxStops</code></td><td>int</td><td>–</td><td>Anzahl der Halte in der Passliste begrenzen.</td></tr>
+<tr><td><code>rtMode</code></td><td>enum</td><td><code>SERVER_DEFAULT</code></td><td><code>OFF</code> schaltet Echtzeit ab.</td></tr>
+<tr><td><code>baim</code></td><td>bool</td><td>false</td><td>Barrierefreiheitsinformationen (BAIM).</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage: nächste Abfahrten am Alexanderplatz<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;duration=30&amp;maxJourneys=5&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Variante: nur S-Bahn, ohne Busse, nur U5<button class="copy" type="button">Kopieren</button></div><pre>…/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;products=1&amp;format=json
+…/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;categories=!Bus&amp;format=json
+…/departureBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;lines=U5&amp;format=json</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt, eine Abfahrt)</div><pre>{
+  "Departure": [
+    {
+      "name": "M4",
+      "type": "ST",
+      "stop": "S+U Alexanderplatz Bhf/Gontardstr. (Berlin)",
+      "stopExtId": "300306026",
+      "mainMastExtId": "900100026",
+      "lon": 13.411339,
+      "lat": 52.521032,
+      "time": "09:46:00",
+      "date": "2026-11-03",
+      "rtTime": "09:52:00",
+      "rtDate": "2026-11-03",
+      "prognosisType": "PROGNOSED",
+      "track": "Pos. 15",
+      "platform": { "type": "PL", "text": "Pos. 15" },
+      "direction": "S Hackescher Markt",
+      "directionFlag": "1",
+      "reachable": true,
+      "entry": true,
+      "JourneyStatus": "P",
+      "JourneyDetailRef": { "ref": "1|76836|0|86|3112026" },
+      "ProductAtStop": {
+        "name": "M4",
+        "displayNumber": "M4",
+        "line": "M4",
+        "lineId": "de:VBB:11000000|Tram|M4:",
+        "LineInfo": { "GlobalIds": [ { "id": "de:VBB:11000000|Tram|M4:", "type": "A" } ] },
+        "catOut": "Tram",
+        "cls": "4",
+        "operatorCode": "BVG",
+        "operator": "Berliner Verkehrsbetriebe",
+        "icon": { "backgroundColor": { "hex": "#CC0000" }, "foregroundColor": { "hex": "#FFFFFF" } }
+      },
+      "Notes": { "Note": [
+        { "key": "FB", "type": "A", "value": "Fahrradmitnahme möglich", "priority": 350 },
+        { "key": "bf", "type": "A", "value": "barrierefrei", "priority": 920 },
+        { "key": "BN", "type": "A", "value": "Tramsteig Gontardstraße hinter Rathausstraße Position 15" }
+      ] }
+    }
+  ],
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52",
+  "planRtTs": "2026-11-03T09:49:24.000+01:00"
+}</pre></div>
+<div class="prose">
+<ul>
+  <li>Mit der ID einer Haltestelle (<code>900100003</code>) enthält die Tafel alle Steige des Knotens, auch Tram- und Busstationen in der Umgebung, sofern sie zur Haltestelle gehören. Für einen einzelnen Bahnsteig fragen Sie die Haltepunkt-ID mit <code>type=DEP_MAST</code> ab.</li>
+  <li><code>JourneyDetailRef.ref</code> verwenden Sie für <a href="#journeydetail"><code>journeyDetail</code></a>.</li>
+  <li>Sortiert wird nach Sollzeit. Wer nach tatsächlicher Abfahrt sortieren möchte, sortiert clientseitig nach <code>rtTime</code> (falls vorhanden, sonst <code>time</code>).</li>
+</ul>
+</div>
+
+<!-- ============================ arrivalBoard ============================ -->
+<h2 id="arrivalboard">arrivalBoard: Ankunftstafel</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>arrivalBoard</b></span></div>
+<div class="prose">
+<p>Gegenstück zur Abfahrtstafel. Parameter und Filter sind identisch mit <a href="#departureboard"><code>departureBoard</code></a>, mit diesen Unterschieden:</p>
+<ul>
+  <li><code>type</code>: <code>ARR</code> (Standard), <code>ARR_MAST</code>, <code>ARR_STATION</code>, <code>ARR_EQUIVS</code>.</li>
+  <li>Die Antwort enthält <code>Arrival[]</code> statt <code>Departure[]</code>; statt <code>direction</code> steht die Herkunft in <code>origin</code>.</li>
+  <li>Der Parameter <code>direction</code> filtert hier auf Fahrten, die von der angegebenen Haltestelle kommen.</li>
+</ul>
+</div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/arrivalBoard?accessId=$ACCESS_ID&amp;id=900100003&amp;duration=30&amp;maxJourneys=3&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "Arrival": [
+    {
+      "name": "M4",
+      "stop": "S+U Alexanderplatz Bhf/Gontardstr. (Berlin)",
+      "stopExtId": "300306026",
+      "mainMastExtId": "900100026",
+      "time": "09:46:00",
+      "date": "2026-11-03",
+      "rtTime": "09:52:00",
+      "rtDate": "2026-11-03",
+      "track": "Pos. 15",
+      "origin": "Zingster Str. (Berlin)",
+      "reachable": true,
+      "entry": true,
+      "JourneyDetailRef": { "ref": "1|76836|0|86|3112026" },
+      "ProductAtStop": { "name": "M4", "catOut": "Tram", "cls": "4", "operatorCode": "BVG" }
+    }
+  ]
+}</pre></div>
+
+<!-- ============================ trip ============================ -->
+<h2 id="trip">trip: Verbindungsauskunft</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>trip</b></span></div>
+<div class="prose">
+<p>Berechnet Verbindungen zwischen zwei Orten (Haltestelle, Adresse oder Koordinate), optional über Zwischenhalte, mit Echtzeit, Tarif, Fußwegen und Polylinien.</p>
+<h4>Start und Ziel</h4>
+<p>Pro Ende genau eine Variante angeben:</p>
+<ul>
+  <li>Haltestelle: <code>originId</code> / <code>destId</code> (z.&nbsp;B. <code>900100003</code>)</li>
+  <li>Koordinate: <code>originCoordLat</code> + <code>originCoordLong</code> bzw. <code>destCoordLat</code> + <code>destCoordLong</code>, optional mit <code>originCoordName</code>/<code>destCoordName</code> als Anzeigename</li>
+</ul>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="4">Start, Ziel, Via</td></tr>
+<tr><td><code>originId</code>, <code>destId</code></td><td>string</td><td>–</td><td>Haltestellen-ID. <code>originExtId</code>/<code>destExtId</code> sind veraltet.</td></tr>
+<tr><td><code>originCoordLat/Long</code>, <code>destCoordLat/Long</code></td><td>double</td><td>–</td><td>Koordinaten (WGS84).</td></tr>
+<tr><td><code>originCoordName</code>, <code>destCoordName</code></td><td>string</td><td>–</td><td>Anzeigename, falls die Koordinate nicht aufgelöst werden kann.</td></tr>
+<tr><td><code>originCoordType</code>, <code>destCoordType</code></td><td>enum</td><td>–</td><td><code>A</code>, <code>ALL</code>, <code>C</code>, <code>P</code>, <code>S</code></td></tr>
+<tr><td><code>viaId</code></td><td>string</td><td>–</td><td>Haltestelle, über die gefahren werden muss.</td></tr>
+<tr><td><code>viaWaitTime</code></td><td>int</td><td class="num">0</td><td>Aufenthalt am Via-Halt in Minuten.</td></tr>
+<tr><td><code>via</code></td><td>string</td><td>–</td><td>Mehrere Via-Punkte, durch <code>;</code> getrennt (komplexe Struktur).</td></tr>
+<tr><td><code>viaGis</code></td><td>string</td><td>–</td><td>Via-Orte für Individualverkehrsabschnitte.</td></tr>
+<tr><td><code>avoidId</code>, <code>avoid</code></td><td>string</td><td>–</td><td>Haltestelle(n), an denen nicht umgestiegen werden soll.</td></tr>
+<tr class="grp"><td colspan="4">Zeit und Umfang</td></tr>
+<tr><td><code>date</code>, <code>time</code></td><td>string</td><td>jetzt</td><td>Abfahrtszeitpunkt.</td></tr>
+<tr><td><code>searchForArrival</code></td><td>bool</td><td>false</td><td><code>1</code>: <code>date</code>/<code>time</code> gelten als gewünschte Ankunft.</td></tr>
+<tr><td><code>numF</code></td><td>int</td><td class="num">5</td><td>Mindestanzahl Verbindungen nach dem Suchzeitpunkt, 1–6.</td></tr>
+<tr><td><code>numB</code></td><td>int</td><td class="num">0</td><td>Mindestanzahl Verbindungen davor, 0–5. <code>numF + numB ≤ 6</code>.</td></tr>
+<tr><td><code>context</code></td><td>string</td><td>–</td><td>Blättern: Wert aus <code>scrF</code> (später) oder <code>scrB</code> (früher) der vorigen Antwort.</td></tr>
+<tr><td><code>includeEarlier</code></td><td>bool</td><td>false</td><td>Optimierung nach Reisedauer abschalten, frühere Abfahrten zulassen.</td></tr>
+<tr class="grp"><td colspan="4">Verkehrsmittel und Linien</td></tr>
+<tr><td><code>products</code></td><td>int</td><td>–</td><td>Produkt-Bitmaske.</td></tr>
+<tr><td><code>lines</code>, <code>lineids</code>, <code>globallineids</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Linienfilter (Name / lineId / GlobalId mit Präfix), Negation mit <code>!</code>.</td></tr>
+<tr><td><code>operators</code>, <code>categories</code>, <code>categoryFlags</code></td><td>string</td><td>–</td><td>Unternehmen, Kategorien, Kategorie-Flags.</td></tr>
+<tr><td><code>attributes</code>, <code>sattributes</code>, <code>fattributes</code></td><td>string</td><td>–</td><td>Fahrt-, Haltestellen- und Fußweg-Attribute.</td></tr>
+<tr><td><code>groupFilter</code>, <code>mobilityProfile</code></td><td>string</td><td>–</td><td>Vordefinierte Filter bzw. Mobilitätsprofile der Installation.</td></tr>
+<tr><td><code>trainFilter</code></td><td>string</td><td>–</td><td>Suche auf einen bestimmten Zug einschränken.</td></tr>
+<tr><td><code>bikeCarriage</code></td><td>bool</td><td>false</td><td>Nur Verbindungen mit Fahrradmitnahme.</td></tr>
+<tr><td><code>bikeCarriageType</code></td><td>enum</td><td>–</td><td><code>SINGLEBIKES</code>, <code>SMALLGROUPS</code>, <code>LARGEGROUPS</code></td></tr>
+<tr><td><code>sleepingCar</code>, <code>couchetteCoach</code></td><td>bool</td><td>false</td><td>Nur Verbindungen mit Schlaf- bzw. Liegewagen.</td></tr>
+<tr><td><code>includeDrt</code></td><td>bool</td><td>true</td><td>Bedarfsverkehre (Rufbus, On-Demand) einbeziehen.</td></tr>
+<tr class="grp"><td colspan="4">Umstiege</td></tr>
+<tr><td><code>maxChange</code></td><td>int</td><td>–</td><td>Maximale Anzahl Umstiege, 0–11.</td></tr>
+<tr><td><code>minChangeTime</code>, <code>maxChangeTime</code></td><td>int</td><td>–</td><td>Minimale / maximale Umstiegszeit in Minuten.</td></tr>
+<tr><td><code>addChangeTime</code></td><td>int</td><td>–</td><td>Zusätzliche Minuten an jedem Umstieg.</td></tr>
+<tr><td><code>changeTimePercent</code></td><td>int</td><td class="num">100</td><td>Umstiegszeiten skalieren; <code>200</code> verdoppelt sie (langsameres Gehen).</td></tr>
+<tr><td><code>withICTAlternatives</code></td><td>bool</td><td>false</td><td>Alternativen mit individuellen Umstiegszeiten suchen.</td></tr>
+<tr><td><code>blockedEdges</code>, <code>blockingList</code>, <code>avoidPaths</code></td><td>string</td><td>–</td><td>Netzabschnitte oder Pfadeigenschaften ausschließen.</td></tr>
+<tr class="grp"><td colspan="4">Fußweg, Rad, Auto (Zu- und Abgang)</td></tr>
+<tr><td><code>originWalk</code>, <code>destWalk</code>, <code>totalWalk</code></td><td>string</td><td>–</td><td>Fußwege am Start, am Ziel bzw. für die gesamte Strecke steuern.</td></tr>
+<tr><td><code>originBike</code>, <code>destBike</code>, <code>totalBike</code></td><td>string</td><td>–</td><td>Fahrradabschnitte.</td></tr>
+<tr><td><code>originCar</code>, <code>destCar</code>, <code>totalCar</code></td><td>string</td><td>–</td><td>Autoabschnitte.</td></tr>
+<tr><td><code>originTaxi</code>, <code>destTaxi</code>, <code>totalTaxi</code></td><td>string</td><td>–</td><td>Taxiabschnitte.</td></tr>
+<tr><td><code>originPark</code>, <code>destPark</code></td><td>string</td><td>–</td><td>Park+Ride.</td></tr>
+<tr><td><code>originMeta</code>, <code>destMeta</code>, <code>totalMeta</code></td><td>string</td><td>–</td><td>Vordefinierte Profile für Individualverkehr.</td></tr>
+<tr><td><code>includeIv</code>, <code>ivOnly</code></td><td>bool</td><td>false</td><td>Reine Individualverkehrsrouten zusätzlich bzw. ausschließlich.</td></tr>
+<tr><td><code>gisProducts</code></td><td>string</td><td>–</td><td>Sharing-Anbieter ausschließen (<code>!code</code>).</td></tr>
+<tr><td><code>allowFootpathEquivalences</code></td><td>bool</td><td>true</td><td>Bei abgeschaltetem Fußweg gleichwertige, per Fußpfad verbundene Haltestellen erlauben.</td></tr>
+<tr class="grp"><td colspan="4">Ausgabe</td></tr>
+<tr><td><code>passlist</code></td><td>bool</td><td>false</td><td>Zwischenhalte je Abschnitt.</td></tr>
+<tr><td><code>showPassingPoints</code></td><td>bool</td><td>false</td><td>Auch Durchfahrten ohne Halt (benötigt <code>passlist</code>).</td></tr>
+<tr><td><code>poly</code></td><td>bool</td><td>false</td><td>Polylinien je Abschnitt.</td></tr>
+<tr><td><code>polyEnc</code></td><td>enum</td><td><code>N</code></td><td><code>N</code> unkodiert · <code>DLT</code> Delta · <code>GPA</code> Google Encoded Polyline.</td></tr>
+<tr><td><code>tariff</code></td><td>bool</td><td>Konfig.</td><td>Tarifauskunft (<code>TariffResult</code>).</td></tr>
+<tr><td><code>trafficMessages</code></td><td>bool</td><td>Konfig.</td><td>Störungsmeldungen je Verbindung.</td></tr>
+<tr><td><code>withFreq</code></td><td>bool</td><td>true</td><td>Taktinformationen (<code>Freq</code>).</td></tr>
+<tr><td><code>withJourneyBoundaryPoints</code></td><td>bool</td><td>false</td><td>Start- und Endhalt der gesamten Fahrt je Abschnitt.</td></tr>
+<tr><td><code>trainComposition</code></td><td>bool</td><td>false</td><td>Zugbildung, soweit vorhanden.</td></tr>
+<tr><td><code>baim</code></td><td>bool</td><td>false</td><td>Barrierefreiheitsinformationen.</td></tr>
+<tr><td><code>rtMode</code></td><td>enum</td><td>–</td><td><code>FULL</code>, <code>INFOS</code>, <code>OFF</code>, <code>REALTIME</code>, <code>SERVER_DEFAULT</code></td></tr>
+<tr class="grp"><td colspan="4">Sonstiges</td></tr>
+<tr><td><code>economic</code>, <code>unsharp</code></td><td>bool</td><td>false</td><td>Sparsamer bzw. unscharfer Suchmodus.</td></tr>
+<tr><td><code>travellerProfileData</code></td><td>string</td><td>–</td><td>Reisendenprofil (Struktur installationsabhängig).</td></tr>
+<tr><td><code>eco</code>, <code>ecoCmp</code>, <code>ecoParams</code></td><td></td><td>false</td><td>Umweltwerte. <code>eco</code>/<code>ecoCmp</code> sind veraltet.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage: Haltestelle zu Haltestelle<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/trip?accessId=$ACCESS_ID&amp;originId=900100003&amp;destId=900023201&amp;numF=2&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielanfrage: Koordinate zu Koordinate mit Tarif und Polylinie<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/trip?accessId=$ACCESS_ID\
+&amp;originCoordLat=52.5163&amp;originCoordLong=13.3777&amp;originCoordName=Brandenburger%20Tor\
+&amp;destCoordLat=52.3906&amp;destCoordLong=13.0645\
+&amp;numF=1&amp;poly=1&amp;tariff=1&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "Trip": [
+    {
+      "idx": 0,
+      "tripId": "C-0",
+      "duration": "PT51M",
+      "Origin": { "name": "Brandenburger Tor", "type": "ADR", "time": "09:57:00", "date": "2026-11-03" },
+      "Destination": { "name": "52.390600, 13.064500", "type": "ADR", "time": "10:48:00" },
+      "LegList": { "Leg": [
+        { "type": "WALK", "name": "Fußweg", "dist": 295, "duration": "PT4M",
+          "Origin": { "name": "Brandenburger Tor", "time": "09:57:00" },
+          "Destination": { "name": "S+U Brandenburger Tor (Berlin)", "extId": "300223072", "time": "10:01:00" },
+          "GisRef": { "ref": "¶G|1|G@F|A=2@O=Brandenburger Tor@…" } },
+        { "type": "JNY", "name": "S26", "direction": "S Blankenburg (Berlin)", "duration": "PT1M",
+          "Origin":      { "name": "S+U Brandenburger Tor (Berlin)", "extId": "300223072", "time": "10:01:00", "track": "2" },
+          "Destination": { "name": "S+U Friedrichstr. Bhf (Berlin)", "extId": "300005612", "time": "10:02:00" },
+          "JourneyDetailRef": { "ref": "1|8579|6|86|3112026|C:B" },
+          "Product": [ { "name": "S26", "catOut": "S", "cls": "1", "LineInfo": { "GlobalIds": [ "…" ] } } ],
+          "minimumChangeDuration": "PT0S" },
+        { "type": "WALK", "name": "Fußweg", "dist": 81, "duration": "PT2M",
+          "Origin": { "name": "S+U Friedrichstr. Bhf (Berlin)", "extId": "300005612", "time": "10:02:00" },
+          "Destination": { "name": "S+U Friedrichstr. Bhf (Berlin)", "extId": "300005466", "time": "10:04:00" } },
+        { "type": "JNY", "name": "S7", "direction": "S Potsdam Hauptbahnhof", "duration": "PT38M",
+          "Origin": { "extId": "300005466", "time": "10:04:00", "track": "6" },
+          "Destination": { "name": "S Potsdam Hauptbahnhof", "extId": "300501057", "time": "10:42:00" },
+          "JourneyDetailRef": { "ref": "1|4700|0|86|3112026|C:B" } },
+        { "type": "WALK", "name": "Fußweg", "dist": 296, "duration": "PT6M" }
+      ] },
+      "TariffResult": { "fareSetItem": [
+        { "name": "Berlin Tarifgebiet A-B-C: Einzelfahrausweis", "desc": "Via: Berlin ABC",
+          "fareItem": [
+            { "name": "Regeltarif", "price": 500, "cur": "EUR" },
+            { "name": "Ermäßigungstarif", "price": 350, "cur": "EUR" },
+            { "name": "Fahrrad", "price": 330, "cur": "EUR" }
+          ] },
+        { "name": "Berlin Tarifgebiet A-B-C: 4-Fahrten-Karte", "fareItem": [ { "name": "Regeltarif", "price": 1680, "cur": "EUR" } ] }
+      ] },
+      "ctxRecon": "¬¶BAIM¶t¬¶HKI¶T$A=1@O=S+U Brandenburger Tor (Berlin)@L=300223072@…",
+      "checksum": "…"
+    }
+  ],
+  "scrB": "3|OB|MTµ14µ16433µ…",
+  "scrF": "3|OF|MTµ14µ16438µ…",
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52"
+}</pre></div>
+<div class="prose">
+<h4>Aufbau einer Verbindung</h4>
+<ul>
+  <li><code>LegList.Leg[]</code> enthält die Abschnitte. <code>type</code>: <code>JNY</code> Fahrt mit einem Verkehrsmittel, <code>WALK</code> Fußweg; bei aktiviertem Individualverkehr zusätzlich Typen wie <code>BIKE</code> oder <code>TAXI</code>. Behandeln Sie unbekannte Typen als generischen Abschnitt.</li>
+  <li>Umstiege innerhalb großer Bahnhöfe erscheinen als eigener <code>WALK</code>-Abschnitt zwischen zwei Haltepunkten (oben: 81&nbsp;m in Friedrichstraße).</li>
+  <li><code>GisRef.ref</code> eines Fußwegs liefert über <a href="#gisroute"><code>gisroute</code></a> die Wegbeschreibung.</li>
+  <li><code>ctxRecon</code> rekonstruiert diese Verbindung später über <a href="#recon"><code>recon</code></a>, z.&nbsp;B. um eine gespeicherte Verbindung mit aktueller Echtzeit zu aktualisieren.</li>
+  <li><code>scrF</code>/<code>scrB</code> als <code>context</code> übergeben, um spätere bzw. frühere Verbindungen zu laden.</li>
+</ul>
+<h4>Polylinien</h4>
+<p>Mit <code>poly=1</code> enthält jeder Fahrtabschnitt <code>PolylineGroup.polylineDesc[].crd</code>, Fußwege <code>GisRoute.polylineGroup</code>. <code>crd</code> ist eine flache Liste <code>[lon, lat, lon, lat, …]</code>. Mit <code>polyEnc=GPA</code> erhalten Sie stattdessen eine Google-Encoded-Polyline (<code>crdEncS</code>), was die Antwort deutlich verkleinert.</p>
+</div>
+
+<!-- ============================ journeyDetail ============================ -->
+<h2 id="journeydetail">journeyDetail: Fahrtverlauf</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>journeyDetail</b></span></div>
+<div class="prose"><p>Liefert den vollständigen Laufweg einer einzelnen Fahrt (Zug, Bus, Tram) mit allen Halten, Soll- und Echtzeiten, Gleisen und Hinweisen.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>id</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Wert aus <code>JourneyDetailRef.ref</code> einer Tafel, Verbindung oder Fahrzeugposition, URL-kodiert.</td></tr>
+<tr><td><code>date</code></td><td>string</td><td>–</td><td>Betriebstag.</td></tr>
+<tr><td><code>fromId</code>, <code>toId</code></td><td>string</td><td>–</td><td>Nur den Teil zwischen diesen Haltestellen liefern.</td></tr>
+<tr><td><code>fromIdx</code>, <code>toIdx</code></td><td>int</td><td>–</td><td>Wie oben, über die Position im Laufweg (<code>routeIdx</code>).</td></tr>
+<tr><td><code>poly</code>, <code>polyEnc</code></td><td></td><td>false, <code>N</code></td><td>Polylinie der Fahrt.</td></tr>
+<tr><td><code>showPassingPoints</code></td><td>bool</td><td>false</td><td>Auch Durchfahrten ohne Halt.</td></tr>
+<tr><td><code>rtMode</code>, <code>baim</code></td><td></td><td></td><td>Wie bei <a href="#trip"><code>trip</code></a>.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/journeyDetail?accessId=$ACCESS_ID&amp;id=1%7C1954%7C5%7C86%7C3112026&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "ref": "1|1954|5|86|3112026|C:B",
+  "dayOfOperation": "2026-11-03",
+  "reachable": true,
+  "JourneyStatus": "P",
+  "Directions": { "Direction": [ { "value": "S Spandau Bhf (Berlin)", "flag": "1", "routeIdxFrom": 0, "routeIdxTo": 29 } ] },
+  "Product": [ { "name": "S3", "catOut": "S", "lineId": "de:VBB:11000000|S-Bahn|S3:S3-B", "operatorCode": "DBS" } ],
+  "Stops": { "Stop": [
+    { "name": "S Erkner Bhf", "extId": "300269032", "routeIdx": 0,
+      "depTime": "09:14:00", "rtDepTime": "09:14:00", "depTrack": "32" },
+    { "name": "S Wilhelmshagen (Berlin)", "extId": "300268001", "routeIdx": 1,
+      "arrTime": "09:17:00", "depTime": "09:17:00", "arrTrack": "1",
+      "Notes": { "Note": [ { "key": "BN", "type": "A", "value": "S-Bahnsteig Gleis 1" } ] } },
+    "… 27 weitere Halte …",
+    { "name": "S Spandau Bhf (Berlin)", "routeIdx": 29, "arrTime": "10:26:00" }
+  ] },
+  "ServiceDays": [ {
+    "planningPeriodBegin": "2026-10-25", "planningPeriodEnd": "2027-12-11",
+    "sDaysR": "nicht täglich", "sDaysI": "3. bis 25. Nov 2026 Mo - Fr",
+    "sDaysB": "1CF9F3E70000…"
+  } ]
+}</pre></div>
+<div class="prose">
+<div class="note warn"><p><strong>Referenzen sind nicht dauerhaft.</strong> <code>JourneyDetailRef.ref</code> gilt nur für den Betriebstag und den aktuellen Datenstand und ist nicht zwischen Systemen austauschbar. Referenzen aus der alten Schnittstelle 2.49 werden mit <code>400 SVC_PARAM</code> abgelehnt. Holen Sie die Referenz immer frisch aus einer aktuellen Antwort.</p></div>
+</div>
+
+<!-- ============================ recon ============================ -->
+<h2 id="recon">recon: Verbindung rekonstruieren <span class="badge b-lim">eingeschränkter Zugang</span></h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>recon</b></span></div>
+<div class="prose">
+<p>Berechnet eine zuvor gefundene Verbindung aus ihrem Kontext (<code>ctxRecon</code>) neu, mit aktuellem Echtzeitstand. Typischer Einsatz: gespeicherte Verbindungen („Meine Fahrten“), Push-Benachrichtigungen bei Verspätung, Weitergabe einer Verbindung per Link.</p>
+<div class="note info"><p><strong>Freischaltung erforderlich.</strong> Dieser Service ist nicht für alle Zugangskennungen aktiviert. Ohne Freischaltung antwortet der Server mit <code>401 API_AUTH</code>. Die Freischaltung beantragen Sie unter <a href="mailto:api@vbb.de">api@vbb.de</a>.</p></div>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>ctx</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Wert aus <code>Trip.ctxRecon</code>, URL-kodiert, max. 32768 Zeichen.</td></tr>
+<tr><td><code>date</code></td><td>string</td><td>–</td><td>Abweichendes Reisedatum.</td></tr>
+<tr><td><code>depL</code>, <code>depU</code></td><td>int</td><td>–</td><td>Erlaubte Abweichung der Abfahrt nach früher/später in Minuten (0–720).</td></tr>
+<tr><td><code>arrL</code>, <code>arrU</code></td><td>int</td><td>–</td><td>Erlaubte Abweichung der Ankunft nach früher/später in Minuten (0–720).</td></tr>
+<tr><td><code>enableReplacements</code></td><td>bool</td><td>–</td><td>Ausgefallene Fahrten durch Ersatzfahrten ersetzen.</td></tr>
+<tr><td><code>enableRtFullSearch</code></td><td>bool</td><td>–</td><td>Bei Misserfolg im Fahrplan zweiten Versuch mit Echtzeitdaten.</td></tr>
+<tr><td><code>allowDummySections</code></td><td>bool</td><td>–</td><td>Nicht rekonstruierbare Abschnitte als Platzhalter statt Fehler.</td></tr>
+<tr><td><code>acceptGaps</code></td><td>bool</td><td>–</td><td>Unvollständige Beschreibung (fehlende Fußwege) akzeptieren.</td></tr>
+<tr><td><code>flagAllNonReachable</code></td><td>bool</td><td>–</td><td>Alle nicht erreichbaren Fahrten markieren, nicht nur die erste.</td></tr>
+<tr><td><code>freq</code></td><td>int</td><td>–</td><td>Intervall in Minuten für Alternativen; <code>0</code> unterdrückt sie.</td></tr>
+<tr><td><code>matchCatStrict</code>, <code>matchIdStrict</code>, <code>matchIdNonBlank</code>, <code>matchNumStrict</code>, <code>matchRtType</code>, <code>useCombinedComparison</code></td><td>bool</td><td>–</td><td>Steuern, wie streng Gattung, Zugbezeichner, Zugnummer und Echtzeittyp übereinstimmen müssen.</td></tr>
+<tr><td><code>meta</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Vordefinierter Filter der Installation.</td></tr>
+<tr><td><code>passlist</code>, <code>showPassingPoints</code>, <code>poly</code>, <code>polyEnc</code>, <code>tariff</code>, <code>trafficMessages</code>, <code>rtMode</code>, <code>baim</code>, <code>withJourneyBoundaryPoints</code>, <code>travellerProfileData</code></td><td></td><td></td><td>Wie bei <a href="#trip"><code>trip</code></a>.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/recon?accessId=$ACCESS_ID&amp;format=json\
+&amp;ctx=%C2%AC%C2%B6BAIM%C2%B6t%C2%AC%C2%B6HKI%C2%B6T%24A%3D1%40O%3DS%2BU%20Alexanderplatz…"</pre></div>
+<div class="prose"><p>Die Antwort hat denselben Aufbau wie bei <code>trip</code> (<code>Trip[]</code> mit <code>LegList</code>, <code>TariffResult</code>, neuem <code>ctxRecon</code>). Ist die Verbindung nicht mehr fahrbar, antwortet der Server mit <code>errorCode: "SVC_NO_RESULT"</code>.</p>
+<div class="note warn"><p><strong>Alte Kontexte sind ungültig.</strong> <code>ctxRecon</code>-Werte aus 2.49 verweisen auf alte Haltestellen-IDs und liefern im neuen System <code>SVC_NO_RESULT</code> („Es wurde keine Verbindung gefunden“). Gespeicherte Verbindungen müssen nach der Umstellung neu gesucht werden.</p></div>
+</div>
+
+<!-- ============================ gisroute ============================ -->
+<h2 id="gisroute">gisroute: Fußweg- und Individualverkehrsroute</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>gisroute</b></span></div>
+<div class="prose"><p>Liefert zu einem Fuß-, Rad- oder Autoabschnitt einer Verbindung die detaillierte Route mit Abbiegehinweisen, Distanzen und Polylinie.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>ctx</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Wert aus <code>Leg.GisRef.ref</code>, URL-kodiert.</td></tr>
+<tr><td><code>poly</code></td><td>bool</td><td>false</td><td>Polylinie mitliefern.</td></tr>
+<tr><td><code>polyEnc</code></td><td>enum</td><td><code>N</code></td><td><code>N</code>, <code>DLT</code>, <code>GPA</code>.</td></tr>
+<tr><td><code>baim</code></td><td>bool</td><td>false</td><td>Barrierefreiheitsinformationen (z.&nbsp;B. Treppen, Aufzüge).</td></tr>
+<tr><td><code>eco</code></td><td>bool</td><td>false</td><td>Umweltwerte.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/gisroute?accessId=$ACCESS_ID&amp;poly=1&amp;format=json&amp;ctx=%C2%B6G%7C1%7CG%40F%7CA%3D2%40O%3DBrandenburger%20Tor…"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "Trip": [ {
+    "Origin": { "name": "Brandenburger Tor", "type": "ADR", "lon": 13.3777, "lat": 52.5163, "time": "09:57:00" },
+    "Destination": { "name": "S+U Brandenburger Tor (Berlin)", "extId": "300223072" },
+    "LegList": { "Leg": [ {
+      "type": "WALK", "dist": 295, "duration": "PT4M",
+      "GisRoute": {
+        "seg": [
+          { "dist": 158, "man": "FR", "manTx": "Start", "ori": "E", "polyS": 0, "polyE": 11 },
+          { "dist": 0, "man": "TO", "manTx": "Ankunft", "ori": "N", "polyS": 11, "polyE": 12 },
+          { "man": "NO", "manTx": "Zugang B Unter den Linden Pariser Platz, Treppe zum Zwischengeschoss", "ori": "U" }
+        ],
+        "polylineGroup": { "polylineDesc": [ { "dim": 2, "delta": false,
+          "crd": [13.3777, 52.5163, 13.377704, 52.51627, 13.377752, 52.516273, "…"] } ] }
+      }
+    } ] }
+  } ]
+}</pre></div>
+<div class="prose"><p><code>man</code> ist der Manövertyp, <code>manTx</code> der Anzeigetext, <code>ori</code> die Himmelsrichtung (<code>N</code>, <code>E</code>, … sowie <code>U</code>/<code>D</code> für Ebenenwechsel). <code>polyS</code>/<code>polyE</code> verweisen auf Indizes in der Polylinie. Neu in 2.52: Segmente können eigene <code>Notes</code> tragen, etwa zu Zugängen.</p></div>
+
+<!-- ============================ journeypos ============================ -->
+<h2 id="journeypos">journeypos: Fahrzeugpositionen</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>journeypos</b></span></div>
+<div class="prose"><p>Liefert Fahrzeuge, die sich in einem Kartenausschnitt (Bounding Box) befinden, mit Position, Fahrtverlauf und interpolierter Bewegung. Typischer Einsatz: Live-Karten.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr><td><code>llLat</code>, <code>llLon</code> <span class="badge b-req">Pflicht</span></td><td>double</td><td>–</td><td>Untere linke Ecke der Box.</td></tr>
+<tr><td><code>urLat</code>, <code>urLon</code> <span class="badge b-req">Pflicht</span></td><td>double</td><td>–</td><td>Obere rechte Ecke der Box.</td></tr>
+<tr><td><code>positionMode</code></td><td>enum</td><td><code>REPORT_ONLY</code></td><td><code>REPORT_ONLY</code> nur gemeldete GPS-Positionen · <code>CALC_REPORT</code> gemeldet, sonst berechnet · <code>CALC</code> alle Positionen aus dem Fahrplan berechnet.</td></tr>
+<tr><td><code>maxJny</code></td><td>int</td><td class="num">1000</td><td>Maximale Anzahl Fahrzeuge, 1–1000.</td></tr>
+<tr><td><code>date</code>, <code>time</code></td><td>string</td><td>jetzt</td><td>Bezugszeitpunkt.</td></tr>
+<tr><td><code>periodSize</code></td><td>int</td><td class="num">30000</td><td>Vorschauzeitraum für Bewegungen in Millisekunden.</td></tr>
+<tr><td><code>periodStep</code></td><td>int</td><td class="num">2000</td><td>Schrittweite der Bewegungspunkte in Millisekunden.</td></tr>
+<tr><td><code>products</code>, <code>lines</code>, <code>globallineids</code> <span class="badge b-new">neu</span>, <code>operators</code>, <code>attributes</code>, <code>infotexts</code>, <code>jid</code></td><td>string</td><td>–</td><td>Filter nach Produkt, Linie, Unternehmen, Attributen, Infotexten oder Fahrt-ID.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage: S-Bahnen in Berlin-Mitte<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/journeypos?accessId=$ACCESS_ID&amp;llLat=52.51&amp;llLon=13.39&amp;urLat=52.53&amp;urLon=13.42&amp;products=1&amp;positionMode=CALC&amp;maxJny=50&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "Journey": [ {
+    "name": "S3",
+    "direction": "S Spandau Bhf (Berlin)",
+    "lon": 13.400831, "lat": 52.522407,
+    "trainCategory": "S-4",
+    "JourneyDetailRef": { "ref": "1|1954|5|86|3112026" },
+    "Product": { "name": "S3", "catOut": "S", "lineId": "de:VBB:11000000|S-Bahn|S3:S3-B" },
+    "JourneyPath": { "JourneyPathItem": [
+      { "progressInTime": 0,    "progressInPercent": 10, "dirGeo": 16, "state": "O",
+        "fromLocationId": "A=1@O=S Hackescher Markt (Berlin)@…@L=300212074@",
+        "toLocationId":   "A=1@O=S+U Friedrichstr. Bhf (Berlin)@…@L=300005466@" },
+      { "progressInTime": 2000, "progressInPercent": 11, "dirGeo": 16, "state": "O" }
+    ] },
+    "Stops": { "Stop": [ { "name": "S Erkner Bhf", "depTime": "09:14:00" }, "…" ] }
+  } ],
+  "planningPeriodBegin": "2026-10-25",
+  "planningPeriodEnd": "2027-12-11"
+}</pre></div>
+<div class="prose">
+<div class="note info"><p><strong>Leere Antwort im Standardmodus.</strong> Mit <code>positionMode=REPORT_ONLY</code> (Standard) erscheinen nur Fahrzeuge, die aktiv GPS-Positionen melden; das Ergebnis kann dann leer sein. Für eine vollständige Karte <code>CALC_REPORT</code> verwenden.</p></div>
+<p>Rufen Sie den Service für Live-Karten höchstens alle 15–30&nbsp;Sekunden auf und animieren Sie dazwischen clientseitig über <code>JourneyPath</code>.</p>
+</div>
+
+<!-- ============================ himsearch ============================ -->
+<h2 id="himsearch">himsearch: Störungs- und Baustellenmeldungen</h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>himsearch</b></span></div>
+<div class="prose"><p>Durchsucht die HAFAS-Informations-Manager-Meldungen (HIM): Bauarbeiten, Störungen, Umleitungen, Hinweise zu Haltestellen und Linien.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="4">Zeitraum</td></tr>
+<tr><td><code>dateB</code>, <code>timeB</code></td><td>string</td><td>–</td><td>Beginn des Ereigniszeitraums (<code>YYYY-MM-DD</code>, <code>hh:mm</code>).</td></tr>
+<tr><td><code>dateE</code>, <code>timeE</code></td><td>string</td><td>–</td><td>Ende des Ereigniszeitraums.</td></tr>
+<tr><td><code>weekdays</code></td><td>string</td><td>–</td><td>Bitmaske der Wochentage ab Montag, z.&nbsp;B. <code>1111100</code>.</td></tr>
+<tr class="grp"><td colspan="4">Betroffene Objekte</td></tr>
+<tr><td><code>lines</code>, <code>lineids</code>, <code>globallineids</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Meldungen zu diesen Linien.</td></tr>
+<tr><td><code>stations</code></td><td>string</td><td>–</td><td>Meldungen zu diesen Haltestellen-IDs.</td></tr>
+<tr><td><code>fromstation</code>, <code>tostation</code>, <code>bothways</code></td><td>string / bool</td><td>–</td><td>Meldungen zu einem Streckenabschnitt, optional in beiden Richtungen.</td></tr>
+<tr><td><code>operators</code>, <code>companies</code></td><td>string</td><td>–</td><td>Unternehmen bzw. meldende Stelle (<code>!</code> schließt aus).</td></tr>
+<tr><td><code>categories</code>, <code>trainnames</code></td><td>string</td><td>–</td><td>Zuggattungen, Zugnamen.</td></tr>
+<tr><td><code>llLat</code>, <code>llLon</code>, <code>urLat</code>, <code>urLon</code></td><td>double</td><td>–</td><td>Bounding Box.</td></tr>
+<tr><td><code>regions</code></td><td>string</td><td>–</td><td>Regionen aus <code>datainfo</code>.</td></tr>
+<tr class="grp"><td colspan="4">Meldungsart</td></tr>
+<tr><td><code>himIds</code></td><td>string</td><td>–</td><td>Bestimmte Meldungen per ID.</td></tr>
+<tr><td><code>himcategory</code></td><td>string</td><td>–</td><td>Kategorie, z.&nbsp;B. Baustelle oder Störung (Werte installationsabhängig).</td></tr>
+<tr><td><code>channels</code></td><td>string</td><td>–</td><td>Ausgabekanäle, z.&nbsp;B. <code>TIMETABLE</code>, <code>HIM_STATION_MONITOR</code>.</td></tr>
+<tr><td><code>minprio</code>, <code>maxprio</code></td><td>int</td><td>–</td><td>Prioritätsbereich.</td></tr>
+<tr><td><code>himtext</code>, <code>exthimtext</code></td><td>string</td><td>–</td><td>Freitextsuche.</td></tr>
+<tr><td><code>himtags</code>, <code>himtexttags</code>, <code>metas</code>, <code>additionalfields</code>, <code>extInfo</code>, <code>searchmode</code></td><td>string</td><td>–</td><td>Erweiterte Filter (installationsabhängig).</td></tr>
+<tr class="grp"><td colspan="4">Ausgabe</td></tr>
+<tr><td><code>orderBy</code></td><td>string</td><td>–</td><td><code>EVT_BEG_ASC</code>, <code>EVT_BEG_DESC</code>, <code>EVT_END_ASC/DESC</code>, <code>PRIO_ASC/DESC</code>, <code>LMOD_ASC/DESC</code>, <code>HID_ASC/DESC</code>, kommagetrennt kombinierbar.</td></tr>
+<tr><td><code>hierarchicalView</code></td><td>bool</td><td>false</td><td>Übergeordnete Meldungen mit Unterelementen.</td></tr>
+<tr><td><code>affectedJourneyMode</code>, <code>affectedJourneyStopMode</code></td><td>string</td><td>–</td><td>Ausgabe betroffener Fahrten und ihrer Halte.</td></tr>
+<tr><td><code>poly</code>, <code>polyEnc</code></td><td></td><td>false</td><td>Geometrie betroffener Abschnitte.</td></tr>
+</tbody></table></div>
+<div class="code"><div class="lbl">Beispielanfrage: Meldungen zur S3 im November<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/himsearch?accessId=$ACCESS_ID&amp;lines=S3&amp;dateB=2026-11-03&amp;dateE=2026-11-30&amp;orderBy=PRIO_DESC&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt, eine Meldung)</div><pre>{
+  "Message": [ {
+    "id": "HIM_FREETEXT_351247",
+    "act": true,
+    "head": "Bauarbeiten.",
+    "text": "Der Zug fällt zwischen Bad Schandau und Schöna aus. Bitte prüfen Sie Ihre Reiseverbindung kurz vor der Abfahrt des Zuges.",
+    "company": "VBB",
+    "category": "1",
+    "messageCategory": [ { "id": 1, "name": "Baustelle" } ],
+    "priority": 5,
+    "icon": "him_gen_constr",
+    "sDate": "2026-11-03", "sTime": "06:47:00",
+    "eDate": "2026-11-05", "eTime": "19:25:00",
+    "modDate": "2026-07-21", "modTime": "22:08:42",
+    "channel": [ { "name": "TIMETABLE", "validFromDate": "2026-07-21", "validToDate": "2026-11-05" } ],
+    "affectedProduct": [ { "name": "S3", "cls": "1", "operatorCode": "DBS" } ],
+    "affectedStops": { "StopLocation": [ { "extId": "900245026", "name": "Dahlewitz, Bahnhof" } ] },
+    "event": [ { "sDate": "2026-10-25", "eDate": "2026-11-05", "sTime": "06:47:00", "eTime": "19:25:00" } ]
+  } ]
+}</pre></div>
+<div class="prose">
+<div class="note"><p><strong>Datenstand vor der Umstellung.</strong> Bis zum Wechsel am 30.11.2026 liefert <code>himsearch</code> nur eine Testmeldung. Die produktiven Störungsmeldungen werden zum Wechsel angeschlossen. Bis dahin liefert eine Anfrage wie oben im neuen System keine solchen Meldungen.</p></div>
+<div class="note warn"><p><strong>Immer filtern.</strong> Eine Anfrage ohne Filter liefert sämtliche aktiven Meldungen und kann mehrere Megabyte groß werden. Schränken Sie mindestens nach Linie, Haltestelle, Zeitraum oder Bounding Box ein.</p></div>
+</div>
+
+<!-- ============================ datainfo ============================ -->
+<h2 id="datainfo">datainfo: Stammdaten der Installation <span class="badge b-new">neu</span></h2>
+<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>datainfo</b></span></div>
+<div class="prose"><p>Liefert die Stammdaten, die Sie für Filter und Darstellung brauchen: Verkehrsunternehmen, Produkte mit Farben, Produktkategorien, Regionen sowie die Fahrplanperiode. Keine weiteren Parameter außer den <a href="#konventionen">allgemeinen</a>.</p></div>
+<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/datainfo?accessId=$ACCESS_ID&amp;format=json"</pre></div>
+<div class="code"><div class="lbl">Beispielantwort (gekürzt)</div><pre>{
+  "Operator": [
+    { "id": "796", "name": "Berliner Verkehrsbetriebe", "nameS": "BVG", "nameN": "BVG",
+      "url": "https://www.bvg.de/", "administration": ["BVB---", "BVF---", "BVT---", "BVU---"] },
+    { "id": "1", "name": "S-Bahn Berlin GmbH", "nameS": "DBS", "url": "https://sbahn.berlin/" }
+  ],
+  "Product": [
+    { "name": "S-Bahn", "cls": "1", "catOut": "S", "catIn": "S-5", "catOutL": "S",
+      "icon": { "res": "prod_gen", "backgroundColor": { "hex": "#37874A" }, "foregroundColor": { "hex": "#FFFFFF" } } }
+  ],
+  "ProductCategory": [ { "name": "S-Bahn", "cls": "1", "Product": [ … ] } ],
+  "Region": [ { "name": "DRT_BVG__N95", "extId": 1000 } ],
+  "begin": "2026-10-25",
+  "end": "2027-12-11",
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52"
+}</pre></div>
+<div class="prose"><p>Die Daten ändern sich selten. Laden Sie sie beim Start Ihrer Anwendung und cachen Sie sie für einen Tag.</p></div>
+
+<!-- ============================ wadl ============================ -->
+<h2 id="wadl">wadl und xsd: Maschinenlesbare Beschreibung</h2>
+<div class="prose">
+<p>Für jeden Service steht eine WADL-Beschreibung aller Parameter bereit, für die Antwortstrukturen ein XML-Schema. Beide sind ohne Zugangskennung abrufbar und eignen sich zur Code-Generierung und zur Prüfung von Parameternamen.</p>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Ressource</th><th>URL</th></tr></thead>
+<tbody>
+<tr><td>Übersicht aller Services</td><td class="wrap"><code>https://vbb.hafas.cloud/api/fahrinfo/latest/</code></td></tr>
+<tr><td>WADL eines Service</td><td class="wrap"><code>https://vbb.hafas.cloud/api/fahrinfo/latest/{service}?wadl</code>, z.&nbsp;B. <code>…/trip?wadl</code></td></tr>
+<tr><td>XML-Schema</td><td class="wrap"><code>https://vbb.hafas.cloud/api/fahrinfo/latest/xsd/rest-2.52.xsd</code></td></tr>
+</tbody></table></div>
+<div class="prose"><p>Die Service-Namen in der WADL-URL entsprechen den Pfaden: <code>arrivalBoard</code>, <code>datainfo</code>, <code>departureBoard</code>, <code>gisroute</code>, <code>himsearch</code>, <code>journeyDetail</code>, <code>journeypos</code>, <code>location.nearbystops</code>, <code>location.name</code>, <code>recon</code>, <code>trip</code>. Jeder Parameter trägt in der WADL die Versionsnummer, seit der er existiert.</p></div>
+
+<hr class="sep">
+
+<!-- ============================ Fehler ============================ -->
+<h2 id="fehler">Fehlerbehandlung</h2>
+<div class="prose">
+<p>Fehler werden als Objekt mit <code>errorCode</code> und <code>errorText</code> geliefert. Fehler aus der Fahrplanberechnung enthalten zusätzlich <code>internalErrorCode</code> und einen anzeigefähigen Text <code>internalErrorTextOut</code>.</p>
+</div>
+<div class="code"><div class="lbl">Beispiel: unbekannte Haltestelle</div><pre>HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=UTF-8
+
+{
+  "serverVersion": "2.52.1",
+  "dialectVersion": "2.52",
+  "errorCode": "SVC_LOC",
+  "errorText": "location missing or invalid (LOCATION).",
+  "internalErrorCode": "LOCATION",
+  "internalErrorText": "HCI Service: location missing or invalid",
+  "internalErrorTextOut": "Während der Suche ist ein interner Fehler aufgetreten",
+  "requestId": "default-request-id"
+}</pre></div>
+<div class="tbl"><table>
+<thead><tr><th>errorCode</th><th>HTTP</th><th>Bedeutung</th><th>Was tun?</th></tr></thead>
+<tbody>
+<tr><td><code>API_AUTH</code></td><td class="num">401</td><td>Kennung ungültig, gesperrt oder für den Service nicht freigeschaltet</td><td>Kennung prüfen, ggf. Freischaltung bei api@vbb.de anfragen</td></tr>
+<tr><td><code>API_PARAM</code></td><td class="num">400</td><td>Pflichtparameter fehlt oder Wert außerhalb des erlaubten Bereichs</td><td><code>errorText</code> nennt den Parameter</td></tr>
+<tr><td><code>SVC_PARAM</code></td><td class="num">400</td><td>Parameter fachlich ungültig, z.&nbsp;B. abgelaufene Fahrtreferenz</td><td>Referenz neu abrufen</td></tr>
+<tr><td><code>SVC_LOC</code></td><td class="num">400</td><td>Ort unbekannt oder ungültig</td><td>ID über <code>location.name</code> prüfen</td></tr>
+<tr><td><code>SVC_LOC_DEP</code> / <code>SVC_LOC_ARR</code></td><td class="num">400</td><td>Start bzw. Ziel fehlt oder ist ungültig</td><td>Start-/Zielparameter prüfen</td></tr>
+<tr><td><code>SVC_DATATIME_PERIOD</code></td><td class="num">400</td><td>Datum außerhalb der Fahrplanperiode</td><td>Periode über <code>datainfo</code> ermitteln</td></tr>
+<tr><td><code>SVC_DATATIME</code></td><td class="num">400</td><td>Datum/Zeit fehlt oder ist ungültig, auch bei unlesbarem <code>ctx</code> in <code>gisroute</code></td><td>Kontext frisch aus <code>trip</code> holen</td></tr>
+<tr><td><code>SVC_NO_RESULT</code></td><td class="num">200</td><td>Anfrage gültig, aber keine Verbindung gefunden</td><td>Hinweis anzeigen, Suche anpassen</td></tr>
+<tr><td>(ohne)</td><td class="num">5xx</td><td>Server- oder Gateway-Fehler</td><td>Mit Backoff wiederholen</td></tr>
+</tbody></table></div>
+<div class="prose">
+<div class="note warn">
+<p><strong>Drei Stolperfallen.</strong></p>
+<ul>
+  <li><code>SVC_NO_RESULT</code> kommt mit HTTP 200. Prüfen Sie bei jeder Antwort, ob <code>errorCode</code> gesetzt ist, nicht nur den Statuscode.</li>
+  <li>Fehler, die vor der Auswertung von <code>format</code> entstehen (fehlende Kennung, ungültiger <code>format</code>-Wert), kommen als XML, auch wenn JSON angefordert wurde. Werten Sie den <code>Content-Type</code> aus, bevor Sie parsen, oder senden Sie zusätzlich <code>Accept: application/json</code>.</li>
+  <li>Eine leere Ergebnisliste ist kein Fehler: Eine Tafel ohne Abfahrten liefert einfach kein <code>Departure</code>-Feld.</li>
+  <li>Ein ungültiger Blätter-Kontext (<code>context</code> in <code>trip</code>) wird ohne Fehlermeldung ignoriert; Sie erhalten dann eine neue Suche ab jetzt statt der erwarteten späteren Verbindungen.</li>
+</ul>
+</div>
+</div>
+
+<!-- ============================ Praxis ============================ -->
+<h2 id="praxis">Gute Praxis</h2>
+<div class="prose">
+<ul>
+  <li><strong>Kennung serverseitig halten.</strong> Bauen Sie einen schlanken Proxy, der die <code>accessId</code> ergänzt und Antworten cacht.</li>
+  <li><strong>Caching.</strong> <code>datainfo</code>: 24&nbsp;h. Haltestellensuche: Stunden. Abfahrtstafeln: höchstens 30&nbsp;s. Verbindungen: nicht über die Sitzung hinaus.</li>
+  <li><strong>Autovervollständigung drosseln.</strong> Senden Sie <code>location.name</code> erst ab drei Zeichen und mit 250–300&nbsp;ms Verzögerung nach dem letzten Tastendruck; nutzen Sie <code>withProducts=0</code>.</li>
+  <li><strong>Antworten klein halten.</strong> <code>maxJourneys</code>, <code>maxNo</code>, <code>passlist=0</code> und <code>polyEnc=GPA</code> reduzieren Datenmenge und Antwortzeit.</li>
+  <li><strong>Gzip aktivieren</strong> (<code>Accept-Encoding: gzip</code>).</li>
+  <li><strong>IDs richtig speichern.</strong> Haltestellen über <code>mainMastExtId</code> oder DHID, nie über Namen oder den Lid-String. Referenzen (<code>JourneyDetailRef</code>, <code>ctxRecon</code>, <code>GisRef</code>, <code>scrF</code>/<code>scrB</code>) als undurchsichtige, kurzlebige Werte behandeln.</li>
+  <li><strong>Tolerant parsen.</strong> Neue Felder können jederzeit hinzukommen, optionale Felder fehlen. Listen sind in JSON immer Arrays.</li>
+  <li><strong>Wiederholungen mit Backoff.</strong> Bei 5xx-Antworten oder Timeouts höchstens zweimal mit wachsendem Abstand wiederholen, bei 4xx nicht.</li>
+  <li><strong>Vereinbarte Anfragelimits einhalten.</strong> Cachen und drosseln Sie so, dass Ihre Anwendung auch in Spitzenzeiten innerhalb der für Ihre Kennung vereinbarten Menge bleibt. Bei übermäßiger Belastung kann der VBB den Zugang vorübergehend deaktivieren.</li>
+  <li><strong>Netzweite Echtzeit über GTFS-RT.</strong> Fragen Sie nicht viele Tafeln oder Fahrten in Schleifen ab, um ein Gesamtbild des Netzes zu bekommen. Dafür ist der <a href="#gtfs-rt">GTFS-RT-Feed</a> gedacht.</li>
+  <li><strong><code>requestId</code> setzen</strong> und zusammen mit dem Response-Header <code>X-Request-ID</code> loggen. Geben Sie bei Supportanfragen an <a href="mailto:api@vbb.de">api@vbb.de</a> beide Werte, die vollständige Anfrage-URL ohne <code>accessId</code> und den Zeitpunkt an.</li>
+  <li><strong>Quellenangabe.</strong> Nennen Sie den VBB als Quelle der Fahrplandaten, zum Beispiel in den AGB oder im Impressum Ihrer Anwendung. Das ist eine der <a href="#zugang">Bedingungen für den Zugang zum Produktivsystem</a>.</li>
+  <li><strong>Mit Ausfällen rechnen.</strong> Es gibt keinen Anspruch auf unterbrechungsfreie Verfügbarkeit. Zeigen Sie bei Fehlern oder Timeouts einen verständlichen Hinweis an, statt die Anwendung abstürzen zu lassen, und greifen Sie, wo es passt, auf zwischengespeicherte Solldaten zurück.</li>
+</ul>
+</div>
+
+<hr class="sep">
+
+<!-- ============================ Changelog ============================ -->
+<h2 id="changelog">Changelog: 2.49 → 2.52</h2>
+<div class="prose">
+<div class="cl-ver"><span class="v">2.49.5 → 2.52.1</span><span class="eyebrow">Umstellung am 30.11.2026</span></div>
+<p>Die bisherige Schnittstelle unter <code>https://fahrinfo.vbb.de/restproxy/latest</code> (Version 2.49) wird am <strong>30.11.2026</strong> durch <code>https://vbb.hafas.cloud/api/fahrinfo/latest</code> (Version 2.52) ersetzt. Stellen Sie Ihre Anwendung bis zu diesem Datum um; die neue Schnittstelle ist bereits jetzt erreichbar. Pfade, Service-Namen und die meisten Parameter bleiben gleich, die Zugangskennung gilt weiter. Grundlage dieses Changelogs ist ein Vergleich der WADL- und XSD-Beschreibungen beider Versionen sowie paralleler Abfragen am 03.11.2026.</p>
+</div>
+
+<h3>Breaking Changes</h3>
+<ul class="cl">
+  <li><span class="badge b-chg">geändert</span><div><strong>Basis-URL.</strong> <code>fahrinfo.vbb.de/restproxy/latest</code> → <code>vbb.hafas.cloud/api/fahrinfo/latest</code>.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Haltepunkt-IDs in Antworten.</strong> <code>stopExtId</code> an Abfahrten und Ankünften, <code>extId</code> an Halten, Fahrtabschnitten und in <code>location.nearbystops</code> enthalten jetzt Haltepunkt-IDs (<code>300…</code>) statt Haltestellen-IDs (<code>900…</code>). Die Haltestelle steht in den neuen Feldern <code>mainMastExtId</code> / <code>mainMast</code>. Code, der <code>stopExtId</code> mit gespeicherten 900er-IDs vergleicht, muss auf <code>mainMastExtId</code> umgestellt werden. Als <em>Eingabe</em> bleiben 900er-IDs gültig.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Haltestellenstruktur in den Daten.</strong> Tram- und Bushaltestellen an großen Knoten sind eigenständige Haltestellen. Beispiel Alexanderplatz: <code>products</code> sinkt von <code>79</code> auf <code>67</code> (nur S, U, Regionalverkehr); Tram und Bus liegen an <code>900100005</code>, <code>900100031</code> usw. Die Abfahrtstafel einer Haltestelle enthält diese weiterhin.</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong>JSONP.</strong> <code>format=jsonp</code> und <code>jsonpCallback</code> werden nicht mehr unterstützt (<code>400 API_PARAM</code>). Verwenden Sie <code>format=json</code> mit CORS.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Notes-Schlüssel.</strong> Ausstattungsattribute haben neue Schlüssel: Rolltreppe <code>FT</code> → <code>RO</code>, Aufzug <code>AT</code> → <code>AU</code>. Weitere Schlüssel sind entfallen oder hinzugekommen (siehe <a href="#hinweise">Hinweise</a>). Wer auf Schlüssel filtert, muss die Zuordnung prüfen.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Referenzen und Kontexte.</strong> <code>JourneyDetailRef.ref</code>, <code>ctxRecon</code>, <code>GisRef.ref</code> und <code>scrB</code>/<code>scrF</code> aus 2.49 sind im neuen System ungültig. Das Format hat sich teils geändert (z.&nbsp;B. Suffix <code>|C:B</code> an Fahrtreferenzen aus <code>trip</code>, Präfix <code>¶G|</code>/<code>¶H|</code> an <code>GisRef</code>, <code>¬¶BAIM¶…</code> an <code>ctxRecon</code>). Gespeicherte Verbindungen müssen nach der Umstellung neu gesucht werden.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Adressnamen.</strong> Adress-Treffer enthalten keine Postleitzahl mehr: „Karl-Marx-Allee 1, 10178 Berlin-Mitte“ → „Karl-Marx-Allee 1, Berlin-Mitte“.</div></li>
+</ul>
+
+<h3>Neu</h3>
+<ul class="cl">
+  <li><span class="badge b-new">neu</span><div><strong>Service <code>datainfo</code></strong> mit Unternehmen, Produkten, Farben, Kategorien, Regionen und Fahrplanperiode. In 2.49 nicht verfügbar.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Parameter <code>globallineids</code></strong> in <code>departureBoard</code>, <code>arrivalBoard</code>, <code>trip</code>, <code>journeypos</code>, <code>himsearch</code> (Filter nach globaler Linien-ID mit Typpräfix <code>A×</code>).</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Parameter <code>operators</code></strong> in <code>location.name</code>.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Parameter <code>duration</code></strong> in <code>location.nearbystops</code> (Verfügbarkeitszeitraum, 1–40320&nbsp;min).</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Parameter <code>meta</code></strong> in <code>recon</code>.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Haltestellen-Hierarchie:</strong> Felder <code>hasMainMast</code>, <code>isMainMast</code>, <code>mainMast</code>, <code>mainMastId</code>, <code>mainMastExtId</code>, <code>mainMastAltId</code>, <code>mainMastLat</code>, <code>mainMastLon</code> an Orten, Abfahrten, Ankünften und Abschnitten.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong><code>LineInfo</code></strong> mit <code>GlobalIds[]</code> und <code>lineId</code> an allen Produkten.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong><code>equivalentStopLocation[]</code></strong> in <code>location.name</code> (gleichwertige Haltestellen eines Knotens).</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Steiginformationen:</strong> Hinweise <code>Nd</code>, <code>Ne</code>, <code>Nf</code>, <code>Nu</code>, <code>NF</code> (Steigbezeichnung de/en), <code>SP</code> (Position), <code>LV</code> (Ebene); DHID auf Steigebene in <code>altId</code>.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Umstiegswege:</strong> Umstiege zwischen Steigen eines Bahnhofs erscheinen als eigener <code>WALK</code>-Abschnitt; Abschnitte tragen <code>minimumChangeDuration</code>.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Zugangsinformationen</strong> als <code>Notes</code> an <code>GisRoute.seg[]</code> (z.&nbsp;B. „Zugang B Unter den Linden Pariser Platz, Treppe zum Zwischengeschoss“).</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Weitere Felder:</strong> <code>entry</code> an Abfahrten/Ankünften, <code>checksumDti</code> und <code>checksumSave</code> an Verbindungen.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>Schema-Erweiterungen</strong> (XSD 2.52, noch nicht in allen Antworten befüllt): <code>globalId</code> an Fahrten, Abschnitten und Unternehmen; <code>OriginStop</code>/<code>DestinationStop</code> an Abfahrten und Ankünften; Auslastung mit Status <code>L</code>/<code>M</code>/<code>H</code>/<code>U</code>/<code>NA</code> und Echtzeitwerten (<code>sRt</code>, <code>vRt</code>, <code>rawRt</code>); Geo-Feature-Typen <code>GEO_REGION</code>, <code>PARKING_ZONE</code>.</div></li>
+  <li><span class="badge b-new">neu</span><div><strong>HTTP:</strong> Response-Header <code>X-Request-ID</code>; <code>POST</code> wird angenommen (2.49: <code>405</code>).</div></li>
+</ul>
+
+<h3>Entfernt</h3>
+<ul class="cl">
+  <li><span class="badge b-del">entfernt</span><div><code>format=jsonp</code>, <code>jsonpCallback</code> (alle Services).</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong><code>requestId</code> in jeder Antwort.</strong> 2.49 lieferte immer eine generierte <code>requestId</code>. 2.52 liefert sie nur noch, wenn Sie selbst <code>requestId</code> mitsenden; zur Nachverfolgung dient der Header <code>X-Request-ID</code>.</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong><code>Occupancy</code></strong> (Auslastung <code>FIRST</code>/<code>SECOND</code> mit <code>raw</code>) ist in Tafeln, Verbindungen, Fahrtverläufen und Fahrzeugpositionen derzeit nicht enthalten; die Anbindung ist voraussichtlich zum Wechsel vorgesehen. Siehe <a href="#offen">offene Punkte</a>.</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong><code>rtPlatform</code>/<code>rtTrack</code> an Ankünften</strong> in Stichproben nicht mehr enthalten; Sollgleis <code>track</code>/<code>platform</code> bleibt.</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong>Technische Meldung <code>backendInfo</code></strong> in <code>TechnicalMessages</code>.</div></li>
+  <li><span class="badge b-del">entfernt</span><div><strong><code>gisroute</code>:</strong> <code>Trip.duration</code>, <code>Trip.dist</code>, <code>Trip.ctxRecon</code>, <code>Trip.checksum</code>, <code>TripStatus</code> sowie <code>edgeHashR</code>/<code>edgeHashS</code> auf Trip-Ebene; Dauer und Distanz stehen weiterhin am Abschnitt (<code>Leg.duration</code>, <code>Leg.dist</code>).</div></li>
+</ul>
+
+<h3>Geändertes Verhalten</h3>
+<ul class="cl">
+  <li><span class="badge b-chg">geändert</span><div><strong>Umgebungssuche.</strong> <code>location.nearbystops</code> liefert Haltepunkte statt Haltestellen und in Stichproben deutlich weniger Treffer als 2.49 (Alexanderplatz, 500&nbsp;m: 2 statt 10 Treffer). Der Fehler ist gemeldet und wird behoben; siehe <a href="#offen">offene Punkte</a>.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Verspätete Fahrten auf Tafeln.</strong> Abfahrten mit Sollzeit vor dem Anfragezeitpunkt, deren Echtzeit danach liegt, werden aufgenommen.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Treffer und Ranking</strong> in <code>location.name</code> unterscheiden sich durch die neue Haltestellenstruktur (andere <code>weight</code>-Werte, andere Reihenfolge).</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Koordinatennamen</strong> in <code>trip</code>: <code>originCoordName</code>/<code>destCoordName</code> wird übernommen; 2.49 ersetzte ihn häufig durch einen nahegelegenen POI („Berlin, Brandenburger Tor“).</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Fehlerantworten bei fehlender Kennung oder ungültigem <code>format</code></strong> kommen als XML, auch bei <code>format=json</code>.</div></li>
+  <li><span class="badge b-chg">geändert</span><div><strong>Übersichtsseite.</strong> 2.49 lieferte für unbekannte Pfade (z.&nbsp;B. <code>/wadl</code>, <code>/datainfo</code>) die Service-Übersicht als HTML mit Status 200. 2.52 antwortet auf unbekannte Pfade mit <code>404</code>; die Übersicht liegt unter <code>/latest/</code>, die WADL je Service unter <code>/{service}?wadl</code>.</div></li>
+</ul>
+
+<div class="note warn" id="offen">
+<p><strong>Offene Punkte (Stand 03.11.2026)</strong></p>
+<ul>
+  <li><strong>Störungsmeldungen:</strong> <code>himsearch</code> liefert im neuen System derzeit nur eine Testmeldung (2.49: 862 aktive Meldungen). Die produktiven Meldungen werden zum Wechsel am 30.11.2026 angeschlossen.</li>
+  <li><strong>Umgebungssuche:</strong> <code>location.nearbystops</code> liefert unabhängig von <code>r</code> nur Haltepunkte der nächstgelegenen Haltestelle, an manchen Koordinaten kein Ergebnis. Der Fehler ist gemeldet und wird behoben.</li>
+  <li><strong>Auslastung:</strong> Auslastungsdaten (<code>Occupancy</code>) fehlen derzeit. Sie werden voraussichtlich ebenfalls zum Wechsel am 30.11.2026 angeschlossen.</li>
+</ul>
+</div>
+
+<h2 id="migration">Migrations-Checkliste</h2>
+<div class="prose">
+<ol>
+  <li>Basis-URL austauschen. Die <code>accessId</code> bleibt gleich.</li>
+  <li>JSONP-Aufrufe auf <code>format=json</code> umstellen (CORS ist aktiv).</li>
+  <li>Überall, wo Sie Haltestellen aus Antworten mit gespeicherten IDs vergleichen, <code>mainMastExtId</code> statt <code>stopExtId</code>/<code>extId</code> verwenden (Fallback auf <code>extId</code>, wenn <code>hasMainMast</code> fehlt).</li>
+  <li>Ergebnisse von <code>location.nearbystops</code> nach <code>mainMastExtId</code> gruppieren.</li>
+  <li>Auswertungen von Notes-Schlüsseln (<code>FT</code>, <code>AT</code> …) auf die neuen Schlüssel prüfen.</li>
+  <li>Gespeicherte <code>ctxRecon</code>, Fahrtreferenzen und Blätter-Kontexte verwerfen und neu erzeugen.</li>
+  <li>Abhängigkeiten von <code>requestId</code> in Antworten und <code>backendInfo</code> entfernen. <code>Occupancy</code> als optional behandeln, bis die Auslastung angeschlossen ist.</li>
+  <li>Fehlerbehandlung um <code>Content-Type</code>-Prüfung ergänzen (XML-Fehler bei JSON-Anfragen).</li>
+  <li>Optional: Linienfilter auf <code>globallineids</code> umstellen, Stammdaten über <code>datainfo</code> laden statt hart zu kodieren.</li>
+  <li>Alte und neue Schnittstelle parallel abfragen und Ergebnisse vergleichen, bevor Sie umschalten.</li>
+  <li>Spätestens am 30.11.2026 produktiv auf die neue Basis-URL umschalten.</li>
+</ol>
+<p>Fragen zur Umstellung richten Sie an <a href="mailto:api@vbb.de">api@vbb.de</a>.</p>
+</div>
+
+<footer>
+  VBB Fahrinfo-API, HAFAS ReST 2.52 · Dokumentationsstand 03.11.2026 · Kontakt: <a href="mailto:api@vbb.de">api@vbb.de</a> · Diese Dokumentation steht unter <a href="https://creativecommons.org/licenses/by/4.0/deed.de" rel="license">CC BY 4.0</a> (Quellenangabe: „VBB Fahrinfo-API – Dokumentation, VBB, CC BY 4.0“), die Code-Beispiele unter <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.de">CC0 1.0</a>. · Die Beispielantworten stammen aus Live-Abfragen und sind gekürzt; Zeiten und IDs ändern sich mit dem Fahrplan.
+</footer>
+
+</div><!-- /col -->
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pre = btn.closest('.code').querySelector('pre');
+    var text = pre.innerText.replace(/\\\n/g, '').replace(/\n\s+&/g, '&');
+    var done = function () { btn.textContent = 'Kopiert'; setTimeout(function () { btn.textContent = 'Kopieren'; }, 1600); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Markiert';
+      setTimeout(function () { btn.textContent = 'Kopieren'; }, 1600);
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } catch (e) { fallback(); }
+  });
+});
+</script>
+</body>
+</html>
