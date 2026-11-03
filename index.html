@@ -115,7 +115,6 @@ li { margin-bottom: 4px; }
 .b-chg { color: var(--chg); background: var(--chg-bg); }
 .b-del { color: var(--del); background: var(--del-bg); }
 .b-req { color: var(--req); background: var(--del-bg); }
-.b-lim { color: var(--accent); background: var(--accent-soft); }
 
 .tbl { overflow-x: auto; margin: 10px 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
@@ -199,7 +198,6 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
         <li><a href="#arrivalboard"><code>arrivalBoard</code></a></li>
         <li><a href="#trip"><code>trip</code></a></li>
         <li><a href="#journeydetail"><code>journeyDetail</code></a></li>
-        <li><a href="#recon"><code>recon</code></a></li>
         <li><a href="#gisroute"><code>gisroute</code></a></li>
         <li><a href="#journeypos"><code>journeypos</code></a></li>
         <li><a href="#himsearch"><code>himsearch</code></a></li>
@@ -446,7 +444,7 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
   <li><code>cancelled: true</code> kennzeichnet ausgefallene Fahrten, <code>partCancelled</code> Teilausfälle, <code>reachable</code> die Erreichbarkeit eines Anschlusses.</li>
   <li><code>prognosisType</code> gibt die Quelle an, z.&nbsp;B. <code>PROGNOSED</code>.</li>
   <li><code>JourneyStatus</code>: <code>P</code> = planmäßige Fahrt. Weitere Werte kennzeichnen Ersatz-, Zusatz- und Sonderfahrten; die vollständige Liste steht im <a href="#wadl">XML-Schema</a>.</li>
-  <li>Mit <code>rtMode</code> steuern Sie die Echtzeitberücksichtigung: <code>OFF</code> (reiner Fahrplan), <code>SERVER_DEFAULT</code>, bei <code>trip</code>/<code>journeyDetail</code>/<code>recon</code> zusätzlich <code>FULL</code>, <code>INFOS</code>, <code>REALTIME</code>.</li>
+  <li>Mit <code>rtMode</code> steuern Sie die Echtzeitberücksichtigung: <code>OFF</code> (reiner Fahrplan), <code>SERVER_DEFAULT</code>, bei <code>trip</code>/<code>journeyDetail</code> zusätzlich <code>FULL</code>, <code>INFOS</code>, <code>REALTIME</code>.</li>
 </ul>
 <p>Tafeln berücksichtigen verspätete Fahrten: Eine um 09:46 geplante, auf 09:52 verspätete Abfahrt erscheint auch bei einer Anfrage um 09:50.</p>
 <div class="note" id="gtfs-rt"><p><strong>Alternative: GTFS-Realtime-Feed.</strong> Wenn Sie Echtzeitdaten für das gesamte Netz brauchen, statt einzelne Tafeln, Verbindungen oder Fahrten abzufragen, nutzen Sie den GTFS-RT-Feed des VBB unter <a href="https://production.gtfsrt.vbb.de/data"><code>https://production.gtfsrt.vbb.de/data</code></a>. Er ergänzt den GTFS-Fahrplandatensatz des VBB um Echtzeitdaten. Den Fahrplandatensatz mit den reinen Solldaten laden Sie immer aktuell über <a href="https://vbb.de/gtfs"><code>vbb.de/gtfs</code></a>.</p>
@@ -840,7 +838,7 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
   <li><code>LegList.Leg[]</code> enthält die Abschnitte. <code>type</code>: <code>JNY</code> Fahrt mit einem Verkehrsmittel, <code>WALK</code> Fußweg; bei aktiviertem Individualverkehr zusätzlich Typen wie <code>BIKE</code> oder <code>TAXI</code>. Behandeln Sie unbekannte Typen als generischen Abschnitt.</li>
   <li>Umstiege innerhalb großer Bahnhöfe erscheinen als eigener <code>WALK</code>-Abschnitt zwischen zwei Haltepunkten (oben: 81&nbsp;m in Friedrichstraße).</li>
   <li><code>GisRef.ref</code> eines Fußwegs liefert über <a href="#gisroute"><code>gisroute</code></a> die Wegbeschreibung.</li>
-  <li><code>ctxRecon</code> rekonstruiert diese Verbindung später über <a href="#recon"><code>recon</code></a>, z.&nbsp;B. um eine gespeicherte Verbindung mit aktueller Echtzeit zu aktualisieren.</li>
+  <li><code>ctxRecon</code> beschreibt die Verbindung als Kontext. Behandeln Sie den Wert als undurchsichtig und kurzlebig.</li>
   <li><code>scrF</code>/<code>scrB</code> als <code>context</code> übergeben, um spätere bzw. frühere Verbindungen zu laden.</li>
 </ul>
 <h4>Polylinien</h4>
@@ -887,36 +885,6 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
 }</pre></div>
 <div class="prose">
 <div class="note warn"><p><strong>Referenzen sind nicht dauerhaft.</strong> <code>JourneyDetailRef.ref</code> gilt nur für den Betriebstag und den aktuellen Datenstand und ist nicht zwischen Systemen austauschbar. Referenzen aus der alten Schnittstelle 2.49 werden mit <code>400 SVC_PARAM</code> abgelehnt. Holen Sie die Referenz immer frisch aus einer aktuellen Antwort.</p></div>
-</div>
-
-<!-- ============================ recon ============================ -->
-<h2 id="recon">recon: Verbindung rekonstruieren <span class="badge b-lim">eingeschränkter Zugang</span></h2>
-<div class="endpoint"><span class="m">GET</span><span class="p">/latest/<b>recon</b></span></div>
-<div class="prose">
-<p>Berechnet eine zuvor gefundene Verbindung aus ihrem Kontext (<code>ctxRecon</code>) neu, mit aktuellem Echtzeitstand. Typischer Einsatz: gespeicherte Verbindungen („Meine Fahrten“), Push-Benachrichtigungen bei Verspätung, Weitergabe einer Verbindung per Link.</p>
-<div class="note info"><p><strong>Freischaltung erforderlich.</strong> Dieser Service ist nicht für alle Zugangskennungen aktiviert. Ohne Freischaltung antwortet der Server mit <code>401 API_AUTH</code>. Die Freischaltung beantragen Sie unter <a href="mailto:api@vbb.de">api@vbb.de</a>.</p></div>
-</div>
-<div class="tbl"><table>
-<thead><tr><th>Parameter</th><th>Typ</th><th>Standard</th><th>Beschreibung</th></tr></thead>
-<tbody>
-<tr><td><code>ctx</code> <span class="badge b-req">Pflicht</span></td><td>string</td><td>–</td><td>Wert aus <code>Trip.ctxRecon</code>, URL-kodiert, max. 32768 Zeichen.</td></tr>
-<tr><td><code>date</code></td><td>string</td><td>–</td><td>Abweichendes Reisedatum.</td></tr>
-<tr><td><code>depL</code>, <code>depU</code></td><td>int</td><td>–</td><td>Erlaubte Abweichung der Abfahrt nach früher/später in Minuten (0–720).</td></tr>
-<tr><td><code>arrL</code>, <code>arrU</code></td><td>int</td><td>–</td><td>Erlaubte Abweichung der Ankunft nach früher/später in Minuten (0–720).</td></tr>
-<tr><td><code>enableReplacements</code></td><td>bool</td><td>–</td><td>Ausgefallene Fahrten durch Ersatzfahrten ersetzen.</td></tr>
-<tr><td><code>enableRtFullSearch</code></td><td>bool</td><td>–</td><td>Bei Misserfolg im Fahrplan zweiten Versuch mit Echtzeitdaten.</td></tr>
-<tr><td><code>allowDummySections</code></td><td>bool</td><td>–</td><td>Nicht rekonstruierbare Abschnitte als Platzhalter statt Fehler.</td></tr>
-<tr><td><code>acceptGaps</code></td><td>bool</td><td>–</td><td>Unvollständige Beschreibung (fehlende Fußwege) akzeptieren.</td></tr>
-<tr><td><code>flagAllNonReachable</code></td><td>bool</td><td>–</td><td>Alle nicht erreichbaren Fahrten markieren, nicht nur die erste.</td></tr>
-<tr><td><code>freq</code></td><td>int</td><td>–</td><td>Intervall in Minuten für Alternativen; <code>0</code> unterdrückt sie.</td></tr>
-<tr><td><code>matchCatStrict</code>, <code>matchIdStrict</code>, <code>matchIdNonBlank</code>, <code>matchNumStrict</code>, <code>matchRtType</code>, <code>useCombinedComparison</code></td><td>bool</td><td>–</td><td>Steuern, wie streng Gattung, Zugbezeichner, Zugnummer und Echtzeittyp übereinstimmen müssen.</td></tr>
-<tr><td><code>meta</code> <span class="badge b-new">neu</span></td><td>string</td><td>–</td><td>Vordefinierter Filter der Installation.</td></tr>
-<tr><td><code>passlist</code>, <code>showPassingPoints</code>, <code>poly</code>, <code>polyEnc</code>, <code>tariff</code>, <code>trafficMessages</code>, <code>rtMode</code>, <code>baim</code>, <code>withJourneyBoundaryPoints</code>, <code>travellerProfileData</code></td><td></td><td></td><td>Wie bei <a href="#trip"><code>trip</code></a>.</td></tr>
-</tbody></table></div>
-<div class="code"><div class="lbl">Beispielanfrage<button class="copy" type="button">Kopieren</button></div><pre>curl "https://vbb.hafas.cloud/api/fahrinfo/latest/recon?accessId=$ACCESS_ID&amp;format=json\
-&amp;ctx=%C2%AC%C2%B6BAIM%C2%B6t%C2%AC%C2%B6HKI%C2%B6T%24A%3D1%40O%3DS%2BU%20Alexanderplatz…"</pre></div>
-<div class="prose"><p>Die Antwort hat denselben Aufbau wie bei <code>trip</code> (<code>Trip[]</code> mit <code>LegList</code>, <code>TariffResult</code>, neuem <code>ctxRecon</code>). Ist die Verbindung nicht mehr fahrbar, antwortet der Server mit <code>errorCode: "SVC_NO_RESULT"</code>.</p>
-<div class="note warn"><p><strong>Alte Kontexte sind ungültig.</strong> <code>ctxRecon</code>-Werte aus 2.49 verweisen auf alte Haltestellen-IDs und liefern im neuen System <code>SVC_NO_RESULT</code> („Es wurde keine Verbindung gefunden“). Gespeicherte Verbindungen müssen nach der Umstellung neu gesucht werden.</p></div>
 </div>
 
 <!-- ============================ gisroute ============================ -->
@@ -1088,7 +1056,7 @@ footer { margin-top: 72px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>WADL eines Service</td><td class="wrap"><code>https://vbb.hafas.cloud/api/fahrinfo/latest/{service}?wadl</code>, z.&nbsp;B. <code>…/trip?wadl</code></td></tr>
 <tr><td>XML-Schema</td><td class="wrap"><code>https://vbb.hafas.cloud/api/fahrinfo/latest/xsd/rest-2.52.xsd</code></td></tr>
 </tbody></table></div>
-<div class="prose"><p>Die Service-Namen in der WADL-URL entsprechen den Pfaden: <code>arrivalBoard</code>, <code>datainfo</code>, <code>departureBoard</code>, <code>gisroute</code>, <code>himsearch</code>, <code>journeyDetail</code>, <code>journeypos</code>, <code>location.nearbystops</code>, <code>location.name</code>, <code>recon</code>, <code>trip</code>. Jeder Parameter trägt in der WADL die Versionsnummer, seit der er existiert.</p></div>
+<div class="prose"><p>Die Service-Namen in der WADL-URL entsprechen den Pfaden: <code>arrivalBoard</code>, <code>datainfo</code>, <code>departureBoard</code>, <code>gisroute</code>, <code>himsearch</code>, <code>journeyDetail</code>, <code>journeypos</code>, <code>location.nearbystops</code>, <code>location.name</code>, <code>trip</code>. Jeder Parameter trägt in der WADL die Versionsnummer, seit der er existiert.</p></div>
 
 <hr class="sep">
 
@@ -1181,7 +1149,6 @@ Content-Type: application/json; charset=UTF-8
   <li><span class="badge b-new">neu</span><div><strong>Parameter <code>globallineids</code></strong> in <code>departureBoard</code>, <code>arrivalBoard</code>, <code>trip</code>, <code>journeypos</code>, <code>himsearch</code> (Filter nach globaler Linien-ID mit Typpräfix <code>A×</code>).</div></li>
   <li><span class="badge b-new">neu</span><div><strong>Parameter <code>operators</code></strong> in <code>location.name</code>.</div></li>
   <li><span class="badge b-new">neu</span><div><strong>Parameter <code>duration</code></strong> in <code>location.nearbystops</code> (Verfügbarkeitszeitraum, 1–40320&nbsp;min).</div></li>
-  <li><span class="badge b-new">neu</span><div><strong>Parameter <code>meta</code></strong> in <code>recon</code>.</div></li>
   <li><span class="badge b-new">neu</span><div><strong>Haltestellen-Hierarchie:</strong> Felder <code>hasMainMast</code>, <code>isMainMast</code>, <code>mainMast</code>, <code>mainMastId</code>, <code>mainMastExtId</code>, <code>mainMastAltId</code>, <code>mainMastLat</code>, <code>mainMastLon</code> an Orten, Abfahrten, Ankünften und Abschnitten.</div></li>
   <li><span class="badge b-new">neu</span><div><strong><code>LineInfo</code></strong> mit <code>GlobalIds[]</code> und <code>lineId</code> an allen Produkten.</div></li>
   <li><span class="badge b-new">neu</span><div><strong><code>equivalentStopLocation[]</code></strong> in <code>location.name</code> (gleichwertige Haltestellen eines Knotens).</div></li>
